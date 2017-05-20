@@ -1,6 +1,6 @@
 {
   "name": "sweet-algebras",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A implementation of emcascript-algebras with macros",
   "main": "src/index.js",
   "scripts": {
