@@ -23,7 +23,7 @@ export function matchIdentifier(ctx) {
   let t = ctx.next();
   if (t.done) throw new Error(`No syntax to match`);
   if (!isIdentifier(t.value)) {
-    throw new Error(`Not an identifier: ${t.value}`);
+    throw new Error(`Expecting an identifier: ${t.value}`);
   }
   return t.value;
 }
@@ -96,6 +96,33 @@ function isDone(ctx) {
   let mark = ctx.mark();
   let result = ctx.next().done;
   ctx.reset(mark);
+  return result;
+}
+
+export function matchImplements(ctx) {
+  let mark = ctx.mark();
+  let implKw = ctx.next().value;
+  if (isIdentifier(implKw) && unwrap(implKw).value === 'implements') {
+    return { value: matchIdentifier(ctx) };
+  }
+  ctx.reset(mark);
+  return {};
+}
+
+// extends a extends b
+export function matchExtendsClause(ctx) {
+  let result = [];
+  while (!isDone(ctx)) {
+    let mark = ctx.mark();
+    let ext = ctx.next().value;
+    if (isKeyword(ext) && unwrap(ext).value === 'extends') {
+      let name = matchIdentifier(ctx);
+      result.push({ name });
+    } else {
+      ctx.reset(mark);
+      break;
+    }
+  }
   return result;
 }
 
