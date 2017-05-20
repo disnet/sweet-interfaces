@@ -10,7 +10,9 @@
   "license": "ISC",
   "devDependencies": {
     "@sweet-js/cli": "^3.0.6",
-    "@sweet-js/core": "^3.0.6",
+    "@sweet-js/core": "^3.0.6"
+  },
+  "dependencies": {
     "@sweet-js/helpers": "^3.0.0"
   }
 }
