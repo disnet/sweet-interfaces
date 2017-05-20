@@ -2,10 +2,15 @@
   "name": "sweet-algebras",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"no tests yet\"; exit 1"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@sweet-js/cli": "^3.0.6",
+    "@sweet-js/core": "^3.0.6",
+    "@sweet-js/helpers": "^3.0.0"
+  }
 }
