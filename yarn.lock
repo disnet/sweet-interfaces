@@ -2,17 +2,17 @@
 # yarn lockfile v1
 
 
-"@sweet-js/cli@^3.0.6":
-  version "3.0.6"
-  resolved "https://registry.yarnpkg.com/@sweet-js/cli/-/cli-3.0.6.tgz#3e4bf7d263a77312e4baee4747055d52c5e8d743"
+"@sweet-js/cli@^3.0.7":
+  version "3.0.7"
+  resolved "https://registry.yarnpkg.com/@sweet-js/cli/-/cli-3.0.7.tgz#0c2d2d585553be7c8c4e739193a9e1bf15e322c1"
   dependencies:
-    "@sweet-js/core" "3.0.6"
+    "@sweet-js/core" "3.0.7"
     semver "^5.3.0"
     yargs "^4.3.2"
 
-"@sweet-js/core@3.0.6", "@sweet-js/core@^3.0.6":
-  version "3.0.6"
-  resolved "https://registry.yarnpkg.com/@sweet-js/core/-/core-3.0.6.tgz#f1fab831985253ddbfdbdda1d4e1eab2c1853f20"
+"@sweet-js/core@3.0.7", "@sweet-js/core@^3.0.7":
+  version "3.0.7"
+  resolved "https://registry.yarnpkg.com/@sweet-js/core/-/core-3.0.7.tgz#fa5a797d69d830616ccc1266cb357a4efceddd69"
   dependencies:
     babel-core "^6.18.0"
     immutable "^3.8.1"
