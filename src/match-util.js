@@ -75,10 +75,14 @@ export function matchPattern(patterns, ctx) {
 
 function matchInterfaceField(ctx) {
   let name = matchIdentifierOrKeyword(ctx);
+  let type = 'field';
+  if (unwrap(name).value === 'static') {
+    type = 'static';
+    name = matchIdentifierOrKeyword(ctx);
+  }
   matchPunctuator(ctx, ';');
   return {
-    type: 'field',
-    name
+    type, name
   };
 }
 
