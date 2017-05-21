@@ -16,7 +16,7 @@ export syntax interface = ctx => {
   let items = matchInterfaceItems(inner);
   let fields = items.reduce((acc, item) => {
     if (item.type === 'field' || item.type === 'static') {
-      return acc.concat(#`${item.name}: { value: Symbol(),
+      return acc.concat(#`${item.name}: { value: Symbol(${JSON.stringify(`${name}.${item.name}`)}),
         writable: false, configurable: false, enumerable: true },`);
     } else {
       return acc.concat(#`${item.name}: { value: function ${item.parens} ${item.body},
