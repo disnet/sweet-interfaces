@@ -22,4 +22,8 @@ class Nothing extends Maybe {
   }
 }
 
+let j = new Just(1);
+
+console.log(Object.getOwnPropertySymbols());
+
 new Just(1)[Functor.map](console.log);

@@ -4,15 +4,22 @@
   "description": "A implementation of emcascript-algebras with macros",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"no tests yet\"; exit 1"
+    "test": "ava"
   },
   "author": "Tim Disney",
   "license": "ISC",
   "devDependencies": {
     "@sweet-js/cli": "^3.0.7",
-    "@sweet-js/core": "^3.0.7"
+    "@sweet-js/core": "^3.0.7",
+    "ava": "^0.19.1",
+    "tmp": "^0.0.31"
   },
   "dependencies": {
     "@sweet-js/helpers": "^3.0.0"
+  },
+  "ava": {
+    "files": [
+      "test/*"
+    ]
   }
 }
