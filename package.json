@@ -9,8 +9,8 @@
   "author": "Tim Disney",
   "license": "ISC",
   "devDependencies": {
-    "@sweet-js/cli": "^3.0.7",
-    "@sweet-js/core": "^3.0.7",
+    "@sweet-js/cli": "^3.0.8",
+    "@sweet-js/core": "^3.0.8",
     "ava": "^0.19.1",
     "tmp": "^0.0.31"
   },
