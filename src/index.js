@@ -26,7 +26,7 @@ export syntax interface = ctx => {
 
   let staticsArr = items.reduce((acc, item) => {
     if (item.type === 'static') {
-      return acc.concat(#`${fromStringLiteral(item.name, unwrap(item.name).value)}, `)
+      return acc.concat(#`${fromStringLiteral(item.name, unwrap(item.name).value)},`)
     }
     return acc;
   }, #``);
@@ -35,28 +35,37 @@ export syntax interface = ctx => {
     configurable: false, writable: false, enumerable: false
   },`;
 
-  let mixin = #`_mixin: { value: function(klass) {
-    for (let s in this) {
-      if (typeof this[s] === 'symbol' && this._statics.includes(s)) {
-        klass[this[s]] = void 0;
-      } else if (typeof this[s] === 'symbol') {
-        klass.prototype[this[s]] = void 0;
-      } else {
-        klass.prototype[s] = this[s];
-      }
-    }
-  }, configurable: false, writable: false, enumerable: false},`;
+  let extArr = extendsClause.reduce((acc, e) => acc.concat(#`${e.name},`), #``);
+  let superclasses = #`_superclasses: {
+    value: [${extArr}],
+    configurable: false, writable: false, enumerable: false
+  },`;
 
-  let extArgs = extendsClause.reduce((acc, e) => acc.concat(#`, ${e.name}`), #``);
-  let ext = extendsClause.length === 0 ? #`` : #`Object.assign(${name} ${extArgs});`;
+  let mixin = #`_mixin: { value: function (klass) {
+    this._superclasses.forEach(s => { s._mixin(klass); });
+    ${items
+      .filter(i => i.type === 'field')
+      .reduce((acc, i) => acc.concat(#`if (klass.prototype[${name}.${i.name}] == null) throw new Error(${name}.${i.name}.toString() + ' not implemented');`), #``)
+    }
+    ${items
+      .filter(i => i.type === 'static')
+      .reduce((acc, i) => acc.concat(#`if (klass[${name}.${i.name}] == null) throw new Error(${name}.${i.name}.toString() + ' not implemented');`), #``)
+    }
+    // TODO: support static methods
+    ${items
+      .filter(i => i.type === 'method')
+      .reduce((acc, i) => acc.concat(#`klass.prototype.${i.name} = this.${i.name};`), #``)
+    }
+    return klass;
+  }, configurable: false, writable: false, enumerable: false},`;
 
   return #`
     const ${name} = Object.create(null, {
       ${fields}
       ${mixin}
+      ${superclasses}
       ${statics}
     });
-    ${ext}
   `;
 }
 
@@ -74,3 +83,7 @@ export syntax class = ctx => {
     ${implStx}
   `
 }
+
+export operator implements left 5 = (left, right) => {
+  return #`${right}._mixin(${left})`;
+};
