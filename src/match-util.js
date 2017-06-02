@@ -77,7 +77,7 @@ function matchInterfaceField(ctx) {
   let name = matchIdentifierOrKeyword(ctx);
   let type = 'field';
   if (unwrap(name).value === 'static') {
-    type = 'static';
+    type = 'static field';
     name = matchIdentifierOrKeyword(ctx);
   }
   matchPunctuator(ctx, ';');
@@ -88,10 +88,15 @@ function matchInterfaceField(ctx) {
 
 function matchInterfaceMethod(ctx) {
   let name = matchIdentifierOrKeyword(ctx);
+  let type = 'method';
+  if (unwrap(name).value === 'static') {
+    type = 'static method';
+    name = matchIdentifierOrKeyword(ctx);
+  }
   let parens = matchParens(ctx);
   let body = matchBraces(ctx);
   return {
-    type: 'method',
+    type: type,
     name, parens, body
   };
 }
@@ -104,30 +109,48 @@ function isDone(ctx) {
 }
 
 export function matchImplements(ctx) {
+  let result = [];
   let mark = ctx.mark();
   let implKw = ctx.next().value;
   if (isIdentifier(implKw) && unwrap(implKw).value === 'implements') {
-    return { value: matchIdentifier(ctx) };
+    result.push(ctx.expand('AssignmentExpression'));
+  } else {
+    ctx.reset(mark);
+    return result;
   }
-  ctx.reset(mark);
-  return {};
+  while (!isDone(ctx)) {
+    mark = ctx.mark();
+    let comma = ctx.next().value;
+    if (isPunctuator(comma) && unwrap(comma).value === ',') {
+      result.push(ctx.expand('AssignmentExpression'));
+    } else {
+      ctx.reset(mark);
+      return result;
+    }
+  }
 }
 
 // extends a extends b
 export function matchExtendsClause(ctx) {
   let result = [];
+  let mark = ctx.mark();
+  let ext = ctx.next().value;
+  if (isKeyword(ext) && unwrap(ext).value === 'extends') {
+    result.push(ctx.expand('AssignmentExpression'));
+  } else {
+    ctx.reset(mark);
+    return result;
+  }
   while (!isDone(ctx)) {
-    let mark = ctx.mark();
-    let ext = ctx.next().value;
-    if (isKeyword(ext) && unwrap(ext).value === 'extends') {
-      let name = matchIdentifier(ctx);
-      result.push({ name });
+    mark = ctx.mark();
+    let comma = ctx.next().value;
+    if (isPunctuator(comma) && unwrap(comma).value === ',') {
+      result.push(ctx.expand('AssignmentExpression'));
     } else {
       ctx.reset(mark);
-      break;
+      return result;
     }
   }
-  return result;
 }
 
 export function matchInterfaceItems(ctx) {

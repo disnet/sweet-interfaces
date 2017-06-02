@@ -5,6 +5,10 @@ import { writeFileSync, readFileSync } from 'fs';
 import { fileSync } from 'tmp';
 
 export function compileAndEval(code) {
+  code = `'lang sweet.js';
+import { class, interface, implements } from '../src/index';
+output = (function() { ${code} }());`;
+
   let output;
   let outFile = fileSync({ dir: __dirname });
   writeFileSync(outFile.fd, code);

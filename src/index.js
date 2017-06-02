@@ -15,7 +15,7 @@ export syntax interface = ctx => {
   let inner = ctx.contextify(body);
   let items = matchInterfaceItems(inner);
   let fields = items.reduce((acc, item) => {
-    if (item.type === 'field' || item.type === 'static') {
+    if (item.type === 'field' || item.type === 'static field') {
       return acc.concat(#`${item.name}: { value: Symbol(${fromStringLiteral(item.name, unwrap(name).value + '.' + unwrap(item.name).value)}),
         writable: false, configurable: false, enumerable: true },`);
     } else {
@@ -25,7 +25,7 @@ export syntax interface = ctx => {
   }, #``);
 
   let staticsArr = items.reduce((acc, item) => {
-    if (item.type === 'static') {
+    if (item.type === 'static field') {
       return acc.concat(#`${fromStringLiteral(item.name, unwrap(item.name).value)},`)
     }
     return acc;
@@ -35,7 +35,7 @@ export syntax interface = ctx => {
     configurable: false, writable: false, enumerable: false
   },`;
 
-  let extArr = extendsClause.reduce((acc, e) => acc.concat(#`${e.name},`), #``);
+  let extArr = extendsClause.reduce((acc, e) => acc.concat(#`${e.value},`), #``);
   let superclasses = #`_superclasses: {
     value: [${extArr}],
     configurable: false, writable: false, enumerable: false
@@ -48,13 +48,16 @@ export syntax interface = ctx => {
       .reduce((acc, i) => acc.concat(#`if (klass.prototype[${name}.${i.name}] == null) throw new Error(${name}.${i.name}.toString() + ' not implemented');`), #``)
     }
     ${items
-      .filter(i => i.type === 'static')
+      .filter(i => i.type === 'static field')
       .reduce((acc, i) => acc.concat(#`if (klass[${name}.${i.name}] == null) throw new Error(${name}.${i.name}.toString() + ' not implemented');`), #``)
     }
-    // TODO: support static methods
     ${items
       .filter(i => i.type === 'method')
       .reduce((acc, i) => acc.concat(#`klass.prototype.${i.name} = this.${i.name};`), #``)
+    }
+    ${items
+      .filter(i => i.type === 'static method')
+      .reduce((acc, i) => acc.concat(#`klass.${i.name} = this.${i.name};`), #``)
     }
     return klass;
   }, configurable: false, writable: false, enumerable: false},`;
@@ -71,12 +74,12 @@ export syntax interface = ctx => {
 
 export syntax class = ctx => {
   let name = matchIdentifier(ctx);
-  let impl = matchImplements(ctx);
   let extendsClause = matchExtendsClause(ctx);
+  let impl = matchImplements(ctx);
   let body = matchBraces(ctx);
 
-  let extendsStx = extendsClause.length === 1 ? #`extends ${extendsClause[0].name}` : #``;
-  let implStx = impl.value == null ? #`` : #`${impl.value}._mixin(${name});`
+  let extendsStx = extendsClause.length === 1 ? #`extends ${extendsClause[0].value}` : #``;
+  let implStx = impl.reduce((acc, i) => acc.concat(#`(${i.value})._mixin(${name});`), #``);
 
   return #`
     class ${name} ${extendsStx} ${body}
