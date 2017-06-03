@@ -126,6 +126,36 @@ test('interfaces can extend other interfaces', t => {
   `));
 });
 
+test('minimal implementations', t => {
+  t.deepEqual({ c: 'function', d: 'function' }, compileAndEval(`
+    interface Functor { map; }
+    interface Applicative extends Functor { pure; apply; }
+    interface Monad extends Applicative { bind; join; kleisli() {} }
+    interface MonadViaBind extends Monad {
+      [Monad.join]() {}
+    }
+    interface MonadViaJoin extends Monad {
+      [Monad.bind]() {}
+    }
+    class C implements MonadViaBind {
+      [Functor.map]() {}
+      [Applicative.pure]() {}
+      [Applicative.apply]() {}
+      [Monad.bind]() {}
+    }
+    class D implements MonadViaJoin {
+      [Functor.map]() {}
+      [Applicative.pure]() {}
+      [Applicative.apply]() {}
+      [Monad.join]() {}
+    }
+    return {
+      c: typeof C.prototype.kleisli,
+      d: typeof D.prototype.kleisli,
+    };
+  `));
+});
+
 
 test('implements operator', t => {
   t.deepEqual('success', compileAndEval(`

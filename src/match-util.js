@@ -1,5 +1,5 @@
 'lang sweet.js';
-import { unwrap, isIdentifier, isKeyword, isParens, isBraces, isPunctuator } from '@sweet-js/helpers';
+import { unwrap, isIdentifier, isKeyword, isParens, isBraces, isBrackets, isPunctuator, isStringLiteral } from '@sweet-js/helpers';
 
 export const $ = {};
 
@@ -12,13 +12,6 @@ export function matchPunctuator(ctx, value) {
   throw new Error(`Could not match punctuator ${value}: ${t.value}`);
 }
 
-export function matchIdentifierOrKeyword(ctx) {
-  let t = ctx.next();
-  if (t.done) throw new Error(`No syntax to match`);
-  if (!(isIdentifier(t.value) || isKeyword(t.value))) throw new Error(`Not an identifier or a keyword: ${t.value}`);
-  return t.value;
-}
-
 export function matchIdentifier(ctx) {
   let t = ctx.next();
   if (t.done) throw new Error(`No syntax to match`);
@@ -26,6 +19,14 @@ export function matchIdentifier(ctx) {
     throw new Error(`Expecting an identifier: ${t.value}`);
   }
   return t.value;
+}
+
+export function isStatic(t) {
+  return isIdentifier(t) && unwrap(t).value === 'static';
+}
+
+export function isPropertyName(t) {
+  return isBrackets(t) || isIdentifier(t) || isKeyword(t) || isStringLiteral(t) || isNumericLiteral(t);
 }
 
 export function matchParens(ctx) {
@@ -39,6 +40,13 @@ export function matchBraces(ctx) {
   let t = ctx.next();
   if (t.done) throw new Error(`No syntax to match`);
   if (!isBraces(t.value)) throw new Error(`Not a braces delimiter: ${t.value}`);
+  return t.value;
+}
+
+export function matchBrackets(ctx) {
+  let t = ctx.next();
+  if (t.done) throw new Error(`No syntax to match`);
+  if (!isBrackets(t.value)) throw new Error(`Not a brackets delimiter: ${t.value}`);
   return t.value;
 }
 
@@ -73,25 +81,37 @@ export function matchPattern(patterns, ctx) {
   return results;
 }
 
+export function matchIdentifierOrKeyword(ctx) {
+  let t = ctx.next();
+  if (t.done) throw new Error(`No syntax to match`);
+  if (!(isIdentifier(t.value) || isKeyword(t.value))) throw new Error(`Not an identifier or a keyword: ${t.value}`);
+  return t.value;
+}
+
 function matchInterfaceField(ctx) {
   let name = matchIdentifierOrKeyword(ctx);
   let type = 'field';
-  if (unwrap(name).value === 'static') {
+  if (isStatic(name)) {
     type = 'static field';
     name = matchIdentifierOrKeyword(ctx);
   }
   matchPunctuator(ctx, ';');
-  return {
-    type, name
-  };
+  return { type, name };
+}
+
+function matchPropertyName(ctx) {
+  let t = ctx.next();
+  if (t.done) throw new Error('No syntax to match');
+  if (!isPropertyName(t.value)) throw new Error('Not a property name');
+  return t.value;
 }
 
 function matchInterfaceMethod(ctx) {
-  let name = matchIdentifierOrKeyword(ctx);
   let type = 'method';
-  if (unwrap(name).value === 'static') {
+  let name = matchPropertyName(ctx);
+  if (isStatic(name)) {
     type = 'static method';
-    name = matchIdentifierOrKeyword(ctx);
+    name = matchPropertyName(ctx);
   }
   let parens = matchParens(ctx);
   let body = matchBraces(ctx);

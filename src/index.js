@@ -1,6 +1,6 @@
 'lang sweet.js';
 import { matchImplements, matchExtendsClause, matchAny, matchInterfaceItems, matchIdentifier, matchBraces } from './match-util' for syntax;
-import { unwrap, fromStringLiteral } from '@sweet-js/helpers' for syntax;
+import { isIdentifier, isKeyword, isStringLiteral, isNumericLiteral, isBrackets, unwrap, fromStringLiteral } from '@sweet-js/helpers' for syntax;
 
 /*
 TODO:
@@ -24,17 +24,6 @@ export syntax interface = ctx => {
     }
   }, #``);
 
-  let staticsArr = items.reduce((acc, item) => {
-    if (item.type === 'static field') {
-      return acc.concat(#`${fromStringLiteral(item.name, unwrap(item.name).value)},`)
-    }
-    return acc;
-  }, #``);
-  let statics = #`_statics: {
-    value: [${staticsArr}],
-    configurable: false, writable: false, enumerable: false
-  },`;
-
   let extArr = extendsClause.reduce((acc, e) => acc.concat(#`${e.value},`), #``);
   let superclasses = #`_superclasses: {
     value: [${extArr}],
@@ -42,7 +31,6 @@ export syntax interface = ctx => {
   },`;
 
   let mixin = #`_mixin: { value: function (klass) {
-    this._superclasses.forEach(s => { s._mixin(klass); });
     ${items
       .filter(i => i.type === 'field')
       .reduce((acc, i) => acc.concat(#`if (klass.prototype[${name}.${i.name}] == null) throw new Error(${name}.${i.name}.toString() + ' not implemented');`), #``)
@@ -53,12 +41,35 @@ export syntax interface = ctx => {
     }
     ${items
       .filter(i => i.type === 'method')
-      .reduce((acc, i) => acc.concat(#`klass.prototype.${i.name} = this.${i.name};`), #``)
+      .map(i => i.name)
+      .map(function memberAccess(p) {
+          if (isIdentifier(p) || isKeyword(p)) {
+            return #`.`.concat(p);
+          } else if (isStringLiteral(p) || isNumericLiteral(p)) {
+            return #`[${p}]`;
+          } else if (isBrackets(p)) {
+            return p;
+          }
+          throw new Error('Unrecognised property name');
+        })
+      .reduce((acc, i) => acc.concat(#`klass.prototype ${i} = this ${i};`), #``)
     }
     ${items
       .filter(i => i.type === 'static method')
-      .reduce((acc, i) => acc.concat(#`klass.${i.name} = this.${i.name};`), #``)
+      .map(i => i.name)
+      .map(function memberAccess(p) {
+          if (isIdentifier(p) || isKeyword(p)) {
+            return #`.`.concat(p);
+          } else if (isStringLiteral(p) || isNumericLiteral(p)) {
+            return #`[${p}]`;
+          } else if (isBrackets(p)) {
+            return p;
+          }
+          throw new Error('Unrecognised property name');
+        })
+      .reduce((acc, i) => acc.concat(#`klass ${i} = this ${i};`), #``)
     }
+    this._superclasses.forEach(s => { s._mixin(klass); });
     return klass;
   }, configurable: false, writable: false, enumerable: false},`;
 
@@ -67,7 +78,6 @@ export syntax interface = ctx => {
       ${fields}
       ${mixin}
       ${superclasses}
-      ${statics}
     });
   `;
 }
