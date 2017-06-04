@@ -145,8 +145,7 @@ export function matchImplements(ctx) {
   }
 }
 
-// extends a extends b
-export function matchExtendsClause(ctx) {
+export function matchClassExtendsClause(ctx) {
   let result = [];
   let mark = ctx.mark();
   let ext = ctx.next().value;
@@ -154,10 +153,15 @@ export function matchExtendsClause(ctx) {
     result.push(ctx.expand('AssignmentExpression'));
   } else {
     ctx.reset(mark);
-    return result;
   }
+  return result;
+}
+
+export function matchInterfaceExtendsClause(ctx) {
+  let result = matchClassExtendsClause(ctx);
+  if (result.length === 0) return result;
   while (!isDone(ctx)) {
-    mark = ctx.mark();
+    let mark = ctx.mark();
     let comma = ctx.next().value;
     if (isPunctuator(comma) && unwrap(comma).value === ',') {
       result.push(ctx.expand('AssignmentExpression'));

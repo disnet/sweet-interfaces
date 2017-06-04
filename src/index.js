@@ -1,5 +1,5 @@
 'lang sweet.js';
-import { matchImplements, matchExtendsClause, matchAny, matchInterfaceItems, matchIdentifier, matchBraces } from './match-util' for syntax;
+import { matchImplements, matchClassExtendsClause, matchInterfaceExtendsClause, matchAny, matchInterfaceItems, matchIdentifier, matchBraces } from './match-util' for syntax;
 import { isIdentifier, isKeyword, isStringLiteral, isNumericLiteral, isBrackets, unwrap, fromStringLiteral } from '@sweet-js/helpers' for syntax;
 
 /*
@@ -14,7 +14,7 @@ export syntax interface = ctx => {
   }
 
   let name = matchIdentifier(ctx);
-  let extendsClause = matchExtendsClause(ctx);
+  let extendsClause = matchInterfaceExtendsClause(ctx);
   let body = matchBraces(ctx);
   let inner = ctx.contextify(body);
   let items = matchInterfaceItems(inner);
@@ -105,19 +105,11 @@ export syntax class = ctx => {
   }
 
   let name = matchIdentifier(ctx);
-  let extendsClause = matchExtendsClause(ctx);
+  let extendsClause = matchClassExtendsClause(ctx);
   let impl = matchImplements(ctx);
   let body = matchBraces(ctx);
 
-  let _extends = #``;
-  switch (extendsClause.length) {
-    case 0: break;
-    case 1:
-      _extends = #`extends ${extendsClause[0].value}`;
-      break;
-    default:
-      throw new Error('cannot have multiple extends clauses in class');
-  }
+  let _extends = extendsClause.length === 1 ? #`extends ${extendsClause[0].value}` : #``;
 
   return #`
     class ${name} ${_extends} ${body}
