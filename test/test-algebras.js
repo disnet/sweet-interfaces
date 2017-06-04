@@ -112,12 +112,37 @@ test('an unimplemented interface throws', t => {
   t.throws(() => { eval(code); });
 });
 
-test('an unimplemented interface throws', t => {
+test('an unimplemented static interface throws', t => {
   let code = compile(`
     interface I { static a; }
     class C implements I {}
   `);
   t.throws(() => { eval(code); });
+});
+
+test('duplicate interface fields is early error', t => {
+  t.throws(() => {
+    compile(`
+      interface I { a; b; a; }
+    `);
+  });
+});
+
+test('duplicate static interface fields is early error', t => {
+  t.throws(() => {
+    compile(`
+      interface I { static a; static b; static a; }
+    `);
+  });
+});
+
+test('same name static and prototype fields', t => {
+  t.notThrows(() => {
+    compile(`
+      interface I { a; static a; }
+      interface K { static a; a; }
+    `);
+  });
 });
 
 

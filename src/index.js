@@ -9,18 +9,6 @@ TODO:
 */
 
 export syntax interface = ctx => {
-
-  function memberAccess(p) {
-    if (isIdentifier(p) || isKeyword(p)) {
-      return #`.`.concat(p);
-    } else if (isStringLiteral(p) || isNumericLiteral(p)) {
-      return #`[${p}]`;
-    } else if (isBrackets(p)) {
-      return p;
-    }
-    throw new Error('Unrecognised property name');
-  }
-
   function join(ts) {
     return ts.reduce((accum, t) => accum.concat(t), #``);
   }
@@ -30,6 +18,20 @@ export syntax interface = ctx => {
   let body = matchBraces(ctx);
   let inner = ctx.contextify(body);
   let items = matchInterfaceItems(inner);
+
+  // early error for duplicate fields
+  function firstDuplicate(xs) {
+    let s = new Set;
+    for (let i = 0; i < xs.length; ++i) {
+      let x = xs[i];
+      if (s.has(x)) return x;
+      s.add(x);
+    }
+  }
+  let dupField = firstDuplicate(items.filter(i => i.type === 'field').map(i => unwrap(i.name).value));
+  if (dupField != null) throw new Error('interface "' + unwrap(name).value + '" declares field "' + dupField + '" more than once');
+  let dupStaticField = firstDuplicate(items.filter(i => i.type === 'static field').map(i => unwrap(i.name).value));
+  if (dupStaticField != null) throw new Error('interface "' + unwrap(name).value + '" declares static field "' + dupStaticField + '" more than once');
 
   let fieldDecls = [], methodDecls = [], staticMethodDecls = [];
   items.forEach(i => {
