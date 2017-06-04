@@ -9,26 +9,6 @@ TODO:
 */
 
 export syntax interface = ctx => {
-  let name = matchIdentifier(ctx);
-  let extendsClause = matchExtendsClause(ctx);
-  let body = matchBraces(ctx);
-  let inner = ctx.contextify(body);
-  let items = matchInterfaceItems(inner);
-  let fields = items.reduce((acc, item) => {
-    if (item.type === 'field' || item.type === 'static field') {
-      return acc.concat(#`${item.name}: { value: Symbol(${fromStringLiteral(item.name, unwrap(name).value + '.' + unwrap(item.name).value)}),
-        writable: false, configurable: false, enumerable: true },`);
-    } else {
-      return acc.concat(#`${item.name}: { value: function ${item.parens} ${item.body},
-        writable: false, configurable: false, enumerable: true },`);
-    }
-  }, #``);
-
-  let extArr = extendsClause.reduce((acc, e) => acc.concat(#`${e.value},`), #``);
-  let superclasses = #`_superclasses: {
-    value: [${extArr}],
-    configurable: false, writable: false, enumerable: false
-  },`;
 
   function memberAccess(p) {
     if (isIdentifier(p) || isKeyword(p)) {
@@ -41,6 +21,42 @@ export syntax interface = ctx => {
     throw new Error('Unrecognised property name');
   }
 
+  function join(ts) {
+    return ts.reduce((accum, t) => accum.concat(t), #``);
+  }
+
+  let name = matchIdentifier(ctx);
+  let extendsClause = matchExtendsClause(ctx);
+  let body = matchBraces(ctx);
+  let inner = ctx.contextify(body);
+  let items = matchInterfaceItems(inner);
+
+  let fieldDecls = [];
+  items.forEach(i => {
+    switch (i.type) {
+      case 'field':
+      case 'static field': {
+        let fieldName = fromStringLiteral(i.name, unwrap(name).value + '.' + unwrap(i.name).value);
+        fieldDecls.push(#`${i.name}: {
+          value: Symbol(${fieldName}),
+          writable: false, configurable: false, enumerable: true,
+        },`);
+        break;
+      }
+      case 'method':
+      case 'static method':
+        fieldDecls.push(#`${i.name}: {
+          value: function ${i.parens} ${i.body},
+          writable: false, configurable: false, enumerable: true,
+        },`);
+    }
+  });
+
+  let superclasses = #`_extends: {
+    value: [${join(extendsClause.map(e => #`${e.value},`))}],
+    configurable: false, writable: false, enumerable: false
+  },`;
+
   let fieldChecks = [], staticFieldChecks = [], methodDecls = [], staticMethodDecls = [];
 
   items.forEach(i => {
@@ -52,44 +68,30 @@ export syntax interface = ctx => {
         staticFieldChecks.push(#`if (klass[${name}.${i.name}] == null) throw new Error(${name}.${i.name}.toString() + ' not implemented by ' + klass);`);
         break;
       case 'method': {
-        let p = i.name;
-        if (isIdentifier(p) || isKeyword(p)) {
-          p = #`.`.concat(p);
-        } else if (isStringLiteral(p) || isNumericLiteral(p)) {
-          p = #`[${p}]`;
-        }
+        let p = memberAccess(i.name);
         methodDecls.push(#`klass.prototype ${p} = this ${p};`);
         break;
       }
       case 'static method': {
-        let p = i.name;
-        if (isIdentifier(p) || isKeyword(p)) {
-          p = #`.`.concat(p);
-        } else if (isStringLiteral(p) || isNumericLiteral(p)) {
-          p = #`[${p}]`;
-        }
+        let p = memberAccess(i.name);
         methodDecls.push(#`klass ${p} = this ${p};`);
         break;
       }
     }
   });
 
-  function join(ts) {
-    return ts.reduce((accum, t) => accum.concat(t), #``);
-  }
-
   let mixin = #`_mixin: { value: function (klass) {
     ${join(fieldChecks)}
     ${join(staticFieldChecks)}
     ${join(methodDecls)}
     ${join(staticMethodDecls)}
-    this._superclasses.forEach(s => { s._mixin(klass); });
+    this._extends.forEach(s => { s._mixin(klass); });
     return klass;
   }, configurable: false, writable: false, enumerable: false},`;
 
   return #`
     const ${name} = Object.create(null, {
-      ${fields}
+      ${join(fieldDecls)}
       ${mixin}
       ${superclasses}
     });
