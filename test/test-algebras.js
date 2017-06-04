@@ -198,36 +198,45 @@ test('minimal implementations', t => {
   `));
 });
 
-// TODO: interleave static/proto methods
 test('evaluation order is preserved', t => {
   t.deepEqual({
     c0: 0,
     c1: 1,
-    c3: 3,
+    c2: 2,
     c4: 4,
+    c5: 5,
+    c6: 6,
     d0: 0,
     d1: 1,
-    e3: 3,
+    d2: 2,
     e4: 4,
+    e5: 5,
+    e6: 6,
     tc0: "function",
     tc1: "function",
-    tc3: "function",
+    tc2: "function",
     tc4: "function",
+    tc5: "function",
+    tc6: "function",
     td0: "function",
     td1: "function",
-    te3: "function",
+    td2: "function",
     te4: "function",
+    te5: "function",
+    te6: "function",
   }, compileAndEval(`
     let counter = 0;
     interface I {
       a;
       [counter++]() { return 0; }
-      [counter++]() { return 1; }
+      static [counter++]() { return 1; }
+      [counter++]() { return 2; }
     }
     interface K extends (counter++, I) {
       b;
-      [counter++]() { return 3; }
       [counter++]() { return 4; }
+      static [counter++]() { return 5; }
+      [counter++]() { return 6; }
     }
     class C implements I, K {
       [I.a]() {}
@@ -245,23 +254,31 @@ test('evaluation order is preserved', t => {
     let e = new E;
     return {
       tc0: typeof c[0],
-      tc1: typeof c[1],
+      tc1: typeof C[1],
+      tc2: typeof c[2],
       c0: c[0](),
-      c1: c[1](),
-      tc3: typeof c[3],
+      c1: C[1](),
+      c2: c[2](),
       tc4: typeof c[4],
-      c3: c[3](),
+      tc5: typeof C[5],
+      tc6: typeof c[6],
       c4: c[4](),
+      c5: C[5](),
+      c6: c[6](),
 
       td0: typeof d[0],
-      td1: typeof d[1],
+      td1: typeof D[1],
+      td2: typeof d[2],
       d0: d[0](),
-      d1: d[1](),
+      d1: D[1](),
+      d2: d[2](),
 
-      te3: typeof e[3],
       te4: typeof e[4],
-      e3: e[3](),
+      te5: typeof E[5],
+      te6: typeof e[6],
       e4: e[4](),
+      e5: E[5](),
+      e6: e[6](),
     };
   `));
 });

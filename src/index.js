@@ -33,7 +33,17 @@ export syntax interface = ctx => {
   let dupStaticField = firstDuplicate(items.filter(i => i.type === 'static field').map(i => unwrap(i.name).value));
   if (dupStaticField != null) throw new Error('interface "' + unwrap(name).value + '" declares static field "' + dupStaticField + '" more than once');
 
-  let fieldDecls = [], methodDecls = [], staticMethodDecls = [];
+  function toDefinePropertyString(p) {
+    if (isIdentifier(p) || isKeyword(p)) {
+      return fromStringLiteral(p, unwrap(p).value);
+    } else if (isBrackets(p)) {
+      // HACK
+      return #`${p}[0]`;
+    }
+    return p;
+  }
+
+  let fieldDecls = [], methods = [];
   items.forEach(i => {
     switch (i.type) {
       case 'field':
@@ -46,15 +56,17 @@ export syntax interface = ctx => {
         break;
       }
       case 'method':
-        methodDecls.push(#`${i.name}: {
-          value: function ${i.parens} ${i.body},
-          writable: false, configurable: false, enumerable: true,
+        methods.push(#`{
+          isStatic: false,
+          name: ${toDefinePropertyString(i.name)},
+          value: function ${i.parens} ${i.body}
         },`);
         break;
       case 'static method':
-        staticMethodDecls.push(#`${i.name}: {
-          value: function ${i.parens} ${i.body},
-          writable: false, configurable: false, enumerable: true,
+        methods.push(#`{
+          isStatic: true,
+          name: ${toDefinePropertyString(i.name)},
+          value: function ${i.parens} ${i.body}
         },`);
         break;
     }
@@ -80,13 +92,17 @@ export syntax interface = ctx => {
         value: [${join(extendsClause.map(e => #`${e.value},`))}],
         configurable: false, writable: false, enumerable: false
       },
-      _methods: { value: Object.create(null, { ${join(methodDecls)} }), configurable: false, writable: false, enumerable: false },
-      _staticMethods: { value: Object.create(null, { ${join(staticMethodDecls)} }), configurable: false, writable: false, enumerable: false },
+      _methods: { value: [${join(methods)}], configurable: false, writable: false, enumerable: false },
       _mixin: { value: function (klass) {
         ${join(fieldChecks)}
         ${join(staticFieldChecks)}
-        Object.assign(klass.prototype, this._methods);
-        Object.assign(klass, this._staticMethods);
+        this._methods.forEach(m => {
+          Object.defineProperty(
+            m.isStatic ? klass : klass.prototype,
+            m.name,
+            { value: m.value, configurable: true, writable: true, enumerable: m.isStatic }
+          );
+        });
         this._extends.forEach(s => { s._mixin(klass); });
         return klass;
       }, configurable: false, writable: false, enumerable: false},
