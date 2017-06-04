@@ -19,6 +19,9 @@ export syntax interface = ctx => {
   let inner = ctx.contextify(body);
   let items = matchInterfaceItems(inner);
 
+  let fields = items.filter(i => i.type === 'field');
+  let methods = items.filter(i => i.type === 'method');
+
   // early error for duplicate fields
   function firstDuplicate(xs) {
     let s = new Set;
@@ -28,18 +31,14 @@ export syntax interface = ctx => {
       s.add(x);
     }
   }
-  let dupField = firstDuplicate(
-    items
-      .filter(i => i.type === 'field' || i.type === 'static field')
-      .map(i => unwrap(i.name).value)
-  );
+  let dupField = firstDuplicate(fields.map(i => unwrap(i.name).value));
   if (dupField != null) throw new Error('interface "' + unwrap(name).value + '" declares field nameed "' + dupField + '" more than once');
 
-  if (items.some(i => i.type === 'static method' && isIdentifier(i.name) && unwrap(i.name).value === 'prototype')) {
+  if (items.some(i => i.type === 'method' && i.isStatic && isIdentifier(i.name) && unwrap(i.name).value === 'prototype')) {
     throw new Error('illegal static method named "prototype"');
   }
 
-  if (items.some(i => i.type === 'method' && isIdentifier(i.name) && unwrap(i.name).value === 'constructor')) {
+  if (items.some(i => i.type === 'method' && !i.isStatic && isIdentifier(i.name) && unwrap(i.name).value === 'constructor')) {
     throw new Error('illegal prototype method named "constructor"');
   }
 
@@ -53,59 +52,39 @@ export syntax interface = ctx => {
     return p;
   }
 
-  let fieldDecls = [], methods = [];
-  items.forEach(i => {
-    switch (i.type) {
-      case 'field':
-      case 'static field': {
-        let fieldName = fromStringLiteral(i.name, unwrap(name).value + '.' + unwrap(i.name).value);
-        fieldDecls.push(#`${i.name}: {
-          value: Symbol(${fieldName}),
-          writable: false, configurable: false, enumerable: true,
-        },`);
-        break;
-      }
-      case 'method':
-        methods.push(#`{
-          isStatic: false,
-          name: ${toDefinePropertyString(i.name)},
-          value: function ${i.parens} ${i.body}
-        },`);
-        break;
-      case 'static method':
-        methods.push(#`{
-          isStatic: true,
-          name: ${toDefinePropertyString(i.name)},
-          value: function ${i.parens} ${i.body}
-        },`);
-        break;
-    }
+  let fieldDescriptors = fields.map(i => {
+    let fieldName = fromStringLiteral(i.name, unwrap(name).value + '.' + unwrap(i.name).value);
+    return #`${i.name}: {
+      value: Symbol(${fieldName}),
+      writable: false, configurable: false, enumerable: true,
+    },`;
   });
 
-  let fieldChecks = [], staticFieldChecks = [];
+  let methodDescriptors = methods.map(i => #`{
+    isStatic: ${i.isStatic ? #`true` : #`false`},
+    name: ${toDefinePropertyString(i.name)},
+    value: function ${i.parens} ${i.body}
+  },`);
 
-  items.forEach(i => {
-    switch (i.type) {
-      case 'field':
-        fieldChecks.push(#`if (klass.prototype[${name}.${i.name}] == null) throw new Error(${name}.${i.name}.toString() + ' not implemented by ' + klass);`);
-        break;
-      case 'static field':
-        staticFieldChecks.push(#`if (klass[${name}.${i.name}] == null) throw new Error(${name}.${i.name}.toString() + ' not implemented by ' + klass);`);
-        break;
+  let fieldChecks = fields.map(i => #`
+    if (klass ${i.isStatic ? #`` : #`.prototype`}[${name}.${i.name}] == null) {
+      throw new Error(${name}.${i.name}.toString() + ' not implemented by ' + klass);
     }
-  });
+  `);
 
   return #`
     const ${name} = Object.create(null, {
-      ${join(fieldDecls)}
+      ${join(fieldDescriptors)}
       _extends: {
         value: [${join(extendsClause.map(e => #`${e.value},`))}],
         configurable: false, writable: false, enumerable: false
       },
-      _methods: { value: [${join(methods)}], configurable: false, writable: false, enumerable: false },
+      _methods: {
+        value: [${join(methodDescriptors)}],
+        configurable: false, writable: false, enumerable: false
+      },
       _mixin: { value: function (klass) {
         ${join(fieldChecks)}
-        ${join(staticFieldChecks)}
         this._methods.forEach(m => {
           Object.defineProperty(
             m.isStatic ? klass : klass.prototype,
@@ -121,17 +100,28 @@ export syntax interface = ctx => {
 }
 
 export syntax class = ctx => {
+  function join(ts) {
+    return ts.reduce((accum, t) => accum.concat(t), #``);
+  }
+
   let name = matchIdentifier(ctx);
   let extendsClause = matchExtendsClause(ctx);
   let impl = matchImplements(ctx);
   let body = matchBraces(ctx);
 
-  let extendsStx = extendsClause.length === 1 ? #`extends ${extendsClause[0].value}` : #``;
-  let implStx = impl.reduce((acc, i) => acc.concat(#`(${i.value})._mixin(${name});`), #``);
+  let _extends = #``;
+  switch (extendsClause.length) {
+    case 0: break;
+    case 1:
+      _extends = #`extends ${extendsClause[0].value}`;
+      break;
+    default:
+      throw new Error('cannot have multiple extends clauses in class');
+  }
 
   return #`
-    class ${name} ${extendsStx} ${body}
-    ${implStx}
+    class ${name} ${_extends} ${body}
+    ${join(impl.map(i => #`(${i.value})._mixin(${name});`))}
   `
 }
 

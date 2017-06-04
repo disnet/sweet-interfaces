@@ -90,13 +90,12 @@ export function matchIdentifierOrKeyword(ctx) {
 
 function matchInterfaceField(ctx) {
   let name = matchIdentifierOrKeyword(ctx);
-  let type = 'field';
-  if (isStatic(name)) {
-    type = 'static field';
+  let _static = isStatic(name);
+  if (_static) {
     name = matchIdentifierOrKeyword(ctx);
   }
   matchPunctuator(ctx, ';');
-  return { type, name };
+  return { type: 'field', isStatic: _static, name };
 }
 
 function matchPropertyName(ctx) {
@@ -107,18 +106,14 @@ function matchPropertyName(ctx) {
 }
 
 function matchInterfaceMethod(ctx) {
-  let type = 'method';
   let name = matchPropertyName(ctx);
-  if (isStatic(name)) {
-    type = 'static method';
+  let _static = isStatic(name);
+  if (_static) {
     name = matchPropertyName(ctx);
   }
   let parens = matchParens(ctx);
   let body = matchBraces(ctx);
-  return {
-    type: type,
-    name, parens, body
-  };
+  return { type: 'method', isStatic: _static, name, parens, body };
 }
 
 function isDone(ctx) {
