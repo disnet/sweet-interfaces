@@ -8,6 +8,13 @@ test('an interface is an object', t => {
   `));
 });
 
+test('an interface has no prototype', t => {
+  t.deepEqual(null, compileAndEval(`
+    interface I {}
+    return Object.getPrototypeOf(I);
+  `));
+});
+
 test('an interface can declare a symbol', t => {
   t.deepEqual('symbol', compileAndEval(`
     interface I {
