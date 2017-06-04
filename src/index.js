@@ -31,7 +31,7 @@ export syntax interface = ctx => {
   let inner = ctx.contextify(body);
   let items = matchInterfaceItems(inner);
 
-  let fieldDecls = [];
+  let fieldDecls = [], methodDecls = [], staticMethodDecls = [];
   items.forEach(i => {
     switch (i.type) {
       case 'field':
@@ -44,20 +44,21 @@ export syntax interface = ctx => {
         break;
       }
       case 'method':
-      case 'static method':
-        fieldDecls.push(#`${i.name}: {
+        methodDecls.push(#`${i.name}: {
           value: function ${i.parens} ${i.body},
           writable: false, configurable: false, enumerable: true,
         },`);
+        break;
+      case 'static method':
+        staticMethodDecls.push(#`${i.name}: {
+          value: function ${i.parens} ${i.body},
+          writable: false, configurable: false, enumerable: true,
+        },`);
+        break;
     }
   });
 
-  let superclasses = #`_extends: {
-    value: [${join(extendsClause.map(e => #`${e.value},`))}],
-    configurable: false, writable: false, enumerable: false
-  },`;
-
-  let fieldChecks = [], staticFieldChecks = [], methodDecls = [], staticMethodDecls = [];
+  let fieldChecks = [], staticFieldChecks = [];
 
   items.forEach(i => {
     switch (i.type) {
@@ -67,33 +68,26 @@ export syntax interface = ctx => {
       case 'static field':
         staticFieldChecks.push(#`if (klass[${name}.${i.name}] == null) throw new Error(${name}.${i.name}.toString() + ' not implemented by ' + klass);`);
         break;
-      case 'method': {
-        let p = memberAccess(i.name);
-        methodDecls.push(#`klass.prototype ${p} = this ${p};`);
-        break;
-      }
-      case 'static method': {
-        let p = memberAccess(i.name);
-        methodDecls.push(#`klass ${p} = this ${p};`);
-        break;
-      }
     }
   });
-
-  let mixin = #`_mixin: { value: function (klass) {
-    ${join(fieldChecks)}
-    ${join(staticFieldChecks)}
-    ${join(methodDecls)}
-    ${join(staticMethodDecls)}
-    this._extends.forEach(s => { s._mixin(klass); });
-    return klass;
-  }, configurable: false, writable: false, enumerable: false},`;
 
   return #`
     const ${name} = Object.create(null, {
       ${join(fieldDecls)}
-      ${mixin}
-      ${superclasses}
+      _extends: {
+        value: [${join(extendsClause.map(e => #`${e.value},`))}],
+        configurable: false, writable: false, enumerable: false
+      },
+      _methods: { value: Object.create(null, { ${join(methodDecls)} }), configurable: false, writable: false, enumerable: false },
+      _staticMethods: { value: Object.create(null, { ${join(staticMethodDecls)} }), configurable: false, writable: false, enumerable: false },
+      _mixin: { value: function (klass) {
+        ${join(fieldChecks)}
+        ${join(staticFieldChecks)}
+        Object.assign(klass.prototype, this._methods);
+        Object.assign(klass, this._staticMethods);
+        this._extends.forEach(s => { s._mixin(klass); });
+        return klass;
+      }, configurable: false, writable: false, enumerable: false},
     });
   `;
 }
