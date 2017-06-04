@@ -122,26 +122,52 @@ test('an unimplemented static interface throws', t => {
 
 test('duplicate interface fields is early error', t => {
   t.throws(() => {
-    compile(`
-      interface I { a; b; a; }
-    `);
+    compile(`interface I { a; b; a; }`);
   });
 });
 
 test('duplicate static interface fields is early error', t => {
   t.throws(() => {
-    compile(`
-      interface I { static a; static b; static a; }
-    `);
+    compile(`interface I { static a; static b; static a; }`);
   });
 });
 
-test('same name static and prototype fields', t => {
+test('same name static and prototype fields is early error', t => {
+  t.throws(() => {
+    compile(`interface I { a; static a; }`);
+  });
+  t.throws(() => {
+    compile(`interface I { static a; a; }`);
+  });
+});
+
+test('static method named prototype is early error', t => {
   t.notThrows(() => {
-    compile(`
-      interface I { a; static a; }
-      interface K { static a; a; }
-    `);
+    compile(`interface I { prototype; }`);
+  });
+  t.notThrows(() => {
+    compile(`interface I { static prototype; }`);
+  });
+  t.notThrows(() => {
+    compile(`interface I { prototype(){} }`);
+  });
+  t.throws(() => {
+    compile(`interface I { static prototype(){} }`);
+  });
+});
+
+test('proto method named constructor is early error', t => {
+  t.notThrows(() => {
+    compile(`interface I { constructor; }`);
+  });
+  t.notThrows(() => {
+    compile(`interface I { static constructor; }`);
+  });
+  t.throws(() => {
+    compile(`interface I { constructor(){} }`);
+  });
+  t.notThrows(() => {
+    compile(`interface I { static constructor(){} }`);
   });
 });
 

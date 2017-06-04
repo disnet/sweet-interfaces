@@ -28,10 +28,20 @@ export syntax interface = ctx => {
       s.add(x);
     }
   }
-  let dupField = firstDuplicate(items.filter(i => i.type === 'field').map(i => unwrap(i.name).value));
-  if (dupField != null) throw new Error('interface "' + unwrap(name).value + '" declares field "' + dupField + '" more than once');
-  let dupStaticField = firstDuplicate(items.filter(i => i.type === 'static field').map(i => unwrap(i.name).value));
-  if (dupStaticField != null) throw new Error('interface "' + unwrap(name).value + '" declares static field "' + dupStaticField + '" more than once');
+  let dupField = firstDuplicate(
+    items
+      .filter(i => i.type === 'field' || i.type === 'static field')
+      .map(i => unwrap(i.name).value)
+  );
+  if (dupField != null) throw new Error('interface "' + unwrap(name).value + '" declares field nameed "' + dupField + '" more than once');
+
+  if (items.some(i => i.type === 'static method' && isIdentifier(i.name) && unwrap(i.name).value === 'prototype')) {
+    throw new Error('illegal static method named "prototype"');
+  }
+
+  if (items.some(i => i.type === 'method' && isIdentifier(i.name) && unwrap(i.name).value === 'constructor')) {
+    throw new Error('illegal prototype method named "constructor"');
+  }
 
   function toDefinePropertyString(p) {
     if (isIdentifier(p) || isKeyword(p)) {
