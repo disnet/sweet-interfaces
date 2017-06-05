@@ -10,12 +10,12 @@ npm install @sweet-js/cli sweet-interfaces
 
 ## Use
 
-Import `class`, `interface`, and `implements` from the `sweet-algrebras` packages:
+Import `class`, `interface`, and `implements` from the `sweet-interfaces` packages:
 
 ```js
 // maybe.js
 'lang sweet.js';
-import { class, interface, implements } from 'sweet-algrebras';
+import { class, interface, implements } from 'sweet-interfaces';
 
 interface Functor {
   map;
