@@ -1,4 +1,4 @@
-# sweet algebras
+# sweet interfaces
 
 This is an experimental implementation of [the ECMAScript interfaces proposal](https://github.com/michaelficarra/ecmascript-interfaces-proposal) using [Sweet.js](https://www.sweetjs.org/).
 
