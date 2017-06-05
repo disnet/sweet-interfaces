@@ -136,6 +136,7 @@ export function matchImplements(ctx) {
   while (!isDone(ctx)) {
     mark = ctx.mark();
     let comma = ctx.next().value;
+    // TODO: I would rather this be `class A implements B implements C {}` but sweet won't let me specify precedence
     if (isPunctuator(comma) && unwrap(comma).value === ',') {
       result.push(ctx.expand('AssignmentExpression'));
     } else {
@@ -150,7 +151,8 @@ export function matchClassExtendsClause(ctx) {
   let mark = ctx.mark();
   let ext = ctx.next().value;
   if (isKeyword(ext) && unwrap(ext).value === 'extends') {
-    result.push(ctx.expand('AssignmentExpression'));
+    // TODO: this should be an expression, but sweet won't let me specify precedence
+    result.push(matchIdentifier(ctx));
   } else {
     ctx.reset(mark);
   }
@@ -158,13 +160,21 @@ export function matchClassExtendsClause(ctx) {
 }
 
 export function matchInterfaceExtendsClause(ctx) {
-  let result = matchClassExtendsClause(ctx);
-  if (result.length === 0) return result;
+  let result = [];
+  let mark = ctx.mark();
+  let ext = ctx.next().value;
+  if (isKeyword(ext) && unwrap(ext).value === 'extends') {
+    result.push(ctx.expand('AssignmentExpression').value);
+  } else {
+    ctx.reset(mark);
+    return result;
+  }
   while (!isDone(ctx)) {
     let mark = ctx.mark();
     let comma = ctx.next().value;
+    // TODO: I would rather this be `interface A extends B extends C {}` but sweet won't let me specify precedence
     if (isPunctuator(comma) && unwrap(comma).value === ',') {
-      result.push(ctx.expand('AssignmentExpression'));
+      result.push(ctx.expand('AssignmentExpression').value);
     } else {
       ctx.reset(mark);
       return result;

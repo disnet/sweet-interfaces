@@ -110,6 +110,30 @@ test('a class can implement multiple interfaces', t => {
   `));
 });
 
+test('a class can extend another and implement an interface', t => {
+  t.deepEqual({ b: 'function', c: 'function', d: 'function', bA: true, bB: true }, compileAndEval(`
+    interface I {
+      a;
+      b(){}
+    }
+    class A {
+      [I.a]() {}
+      c(){}
+    }
+    class B extends A implements I {
+      d(){}
+    }
+    let b = new B;
+    return {
+      b: typeof b.c,
+      c: typeof b.c,
+      d: typeof b.d,
+      bA: b instanceof A,
+      bB: b instanceof B,
+    };
+  `));
+});
+
 
 test('an unimplemented interface throws', t => {
   let code = compile(`

@@ -76,7 +76,7 @@ export syntax interface = ctx => {
     const ${name} = Object.create(null, {
       ${join(fieldDescriptors)}
       _extends: {
-        value: [${join(extendsClause.map(e => #`${e.value},`))}],
+        value: [${join(extendsClause.map(e => #`${e},`))}],
         configurable: false, writable: false, enumerable: false
       },
       _methods: {
@@ -109,7 +109,7 @@ export syntax class = ctx => {
   let impl = matchImplements(ctx);
   let body = matchBraces(ctx);
 
-  let _extends = extendsClause.length === 1 ? #`extends ${extendsClause[0].value}` : #``;
+  let _extends = extendsClause.length === 1 ? #`extends ${extendsClause[0]}` : #``;
 
   return #`
     class ${name} ${_extends} ${body}
