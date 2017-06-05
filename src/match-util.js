@@ -1,5 +1,5 @@
 'lang sweet.js';
-import { unwrap, isIdentifier, isKeyword, isParens, isBraces, isBrackets, isPunctuator, isStringLiteral } from '@sweet-js/helpers';
+import { unwrap, isIdentifier, isKeyword, isParens, isBraces, isBrackets, isPunctuator, isStringLiteral, isNumericLiteral } from '@sweet-js/helpers';
 
 export const $ = {};
 
