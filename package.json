@@ -1,12 +1,13 @@
 {
-  "name": "sweet-algebras",
-  "version": "0.0.4",
-  "description": "A implementation of emcascript-algebras with macros",
+  "name": "sweet-interfaces",
+  "version": "0.1.0",
+  "description": "an implementation of the ECMAScript interfaces proposal with macros",
   "main": "src/index.js",
+  "files": ["src"],
   "scripts": {
     "test": "ava"
   },
-  "author": "Tim Disney",
+  "authors": ["Tim Disney", "Michael Ficarra"],
   "license": "ISC",
   "devDependencies": {
     "@sweet-js/cli": "^3.0.8",

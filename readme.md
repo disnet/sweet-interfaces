@@ -1,28 +1,28 @@
 # sweet algebras
 
-This is an experimental implementation of [emcascript algebras](https://github.com/michaelficarra/ecmascript-algebras) in Sweet.js.
+This is an experimental implementation of [the ECMAScript interfaces proposal](https://github.com/michaelficarra/ecmascript-interfaces-proposal) using [Sweet.js](https://www.sweetjs.org/).
 
 ## Install
 
 ```sh
-npm install @sweet-js/cli sweet-algrebras
+npm install @sweet-js/cli sweet-interfaces
 ```
 
 ## Use
 
-Import `class` and `interface` from the `sweet-algrebras` packages:
+Import `class`, `interface`, and `implements` from the `sweet-algrebras` packages:
 
 ```js
 // maybe.js
 'lang sweet.js';
-import { class, interface } from 'sweet-algrebras';
+import { class, interface, implements } from 'sweet-algrebras';
 
 interface Functor {
   map;
 }
 
-class Maybe implements Functor { }
-class Just extends Maybe {
+class Maybe { }
+class Just extends Maybe implements Functor {
   constructor(value) {
     super();
     this.value = value;
@@ -32,7 +32,7 @@ class Just extends Maybe {
     return new Just(fn(this.value));
   }
 }
-class Nothing extends Maybe {
+class Nothing extends Maybe implements Functor {
   [Functor.map](fn) {
     return this;
   }
