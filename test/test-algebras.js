@@ -357,6 +357,38 @@ test('overriding methods of implemented interfaces', t => {
   `));
 });
 
+test('diamond pattern dependencies where one side introduces a needed field', t => {
+  t.deepEqual({ success: 'function', a: 'function' }, compileAndEval(`
+    interface A {
+      a;
+      success() { return 'success'; }
+    }
+
+    interface B0 extends A {
+      b0;
+    }
+
+    interface B1 extends A {
+      b1;
+      [A.a]() {}
+    }
+
+    interface C extends B0, B1 {
+      c;
+    }
+
+    class X implements C {
+      [B0.b0]() {}
+      [B1.b1]() {}
+      [C.c]() {}
+    }
+    return {
+      success: typeof X.prototype.success,
+      a: typeof X.prototype[A.a],
+    };
+  `));
+});
+
 
 
 test('implements operator', t => {

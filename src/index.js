@@ -52,42 +52,66 @@ export syntax interface = ctx => {
     return p;
   }
 
+  let fieldGetters = fields.map(i => {
+    let fieldName = fromStringLiteral(i.name, unwrap(name).value + '.' + unwrap(i.name).value);
+    return #`${i.name}: {
+      get: function() { return this._fields.${i.name}.value; },
+      configurable: false, enumerable: true,
+    },`;
+  });
+
   let fieldDescriptors = fields.map(i => {
     let fieldName = fromStringLiteral(i.name, unwrap(name).value + '.' + unwrap(i.name).value);
     return #`${i.name}: {
+      isStatic: ${i.isStatic ? #`true` : #`false`},
+      name: ${toDefinePropertyString(i.name)},
       value: Symbol(${fieldName}),
-      writable: false, configurable: false, enumerable: true,
     },`;
   });
 
   let methodDescriptors = methods.map(i => #`{
     isStatic: ${i.isStatic ? #`true` : #`false`},
     name: ${toDefinePropertyString(i.name)},
-    value: function ${i.parens} ${i.body}
+    value: function ${i.parens} ${i.body},
   },`);
-
-  let fieldChecks = fields.map(i => #`
-    if (klass ${i.isStatic ? #`` : #`.prototype`}[${name}.${i.name}] == null) {
-      throw new Error(${name}.${i.name}.toString() + ' not implemented by ' + klass);
-    }
-  `);
 
   let _extends = extendsClause.map(e => #`${e},`);
 
   return #`
     const ${name} = Object.create(null, {
-      ${join(fieldDescriptors)}
+      ${join(fieldGetters)}
       _extends: {
         value: [${join(_extends)}],
+        configurable: false, writable: false, enumerable: false
+      },
+      _fields: {
+        value: {${join(fieldDescriptors)}},
         configurable: false, writable: false, enumerable: false
       },
       _methods: {
         value: [${join(methodDescriptors)}],
         configurable: false, writable: false, enumerable: false
       },
+      _check: { value: function (klass, staticIgnoring, protoIgnoring) {
+        for (let field of Object.values(this._fields)) {
+          let target = field.isStatic ? klass : klass.prototype;
+          let ignoring = field.isStatic ? staticIgnoring : protoIgnoring;
+          if (!ignoring.includes(field.value) && target[field.value] == null) {
+            throw new Error(field.value.toString() + ' not implemented by ' + klass);
+          }
+        }
+        this._extends.forEach(s => { s._check(klass, staticIgnoring, protoIgnoring); });
+      }, configurable: false, writable: false, enumerable: false},
+      _collect: { value: function (fn) {
+        return [...fn(this), ...[].concat.apply([], this._extends.map(i => i._collect(fn)))];
+      }, configurable: false, writable: false, enumerable: false},
       _mixin: { value: function (klass) {
-        ${join(fieldChecks)}
-        this._methods.forEach(m => {
+        this._check(
+          klass,
+          this._collect(i => i._methods.filter(m => m.isStatic && typeof m.name === 'symbol').map(m => m.name)),
+          this._collect(i => i._methods.filter(m => !m.isStatic && typeof m.name === 'symbol').map(m => m.name)),
+        );
+        this._collect(i => i._methods).forEach(m => {
           let target = m.isStatic ? klass : klass.prototype;
           if ({}.hasOwnProperty.call(target, m.name)) return;
           Object.defineProperty(
@@ -96,7 +120,6 @@ export syntax interface = ctx => {
             { value: m.value, configurable: true, writable: true, enumerable: m.isStatic }
           );
         });
-        this._extends.forEach(s => { s._mixin(klass); });
         return klass;
       }, configurable: false, writable: false, enumerable: false},
     });
