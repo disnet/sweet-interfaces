@@ -72,11 +72,13 @@ export syntax interface = ctx => {
     }
   `);
 
+  let _extends = extendsClause.map(e => #`${e},`);
+
   return #`
     const ${name} = Object.create(null, {
       ${join(fieldDescriptors)}
       _extends: {
-        value: [${join(extendsClause.map(e => #`${e},`))}],
+        value: [${join(_extends)}],
         configurable: false, writable: false, enumerable: false
       },
       _methods: {
@@ -86,8 +88,10 @@ export syntax interface = ctx => {
       _mixin: { value: function (klass) {
         ${join(fieldChecks)}
         this._methods.forEach(m => {
+          let target = m.isStatic ? klass : klass.prototype;
+          if ({}.hasOwnProperty.call(target, m.name)) return;
           Object.defineProperty(
-            m.isStatic ? klass : klass.prototype,
+            target,
             m.name,
             { value: m.value, configurable: true, writable: true, enumerable: m.isStatic }
           );

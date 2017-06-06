@@ -340,6 +340,23 @@ test('evaluation order is preserved', t => {
   `));
 });
 
+test('overriding methods of implemented interfaces', t => {
+  t.deepEqual(0, compileAndEval(`
+    interface I {
+      a;
+    }
+    interface J extends I {
+      b;
+      [I.a]() { return 5; }
+    }
+    class A implements J {
+      [J.b](){}
+      [I.a]() { return 0; }
+    }
+    return (new A)[I.a]();
+  `));
+});
+
 
 
 test('implements operator', t => {
