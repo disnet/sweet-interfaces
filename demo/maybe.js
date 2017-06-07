@@ -1,4 +1,4 @@
-import { class, interface } from '../src/index';
+import { class, interface, implements } from '../src/index';
 
 interface Functor {
   // map :: Functor f => f a ~> (a -> b) -> f b
@@ -13,35 +13,29 @@ interface Apply extends Functor {
 interface Applicative extends Apply {
   // of :: Applicative f => a -> f a
   static of;
+  [Functor.map](f) { return this[Apply.ap](this.constructor[Applicative.of](f)); }
 }
 
 interface Chain extends Apply {
   // chain :: Chain m => m a ~> (a -> m b) -> m b
   chain;
+  [Apply.ap](m) { return m[Chain.chain](f => this[Functor.map](f)); }
 }
 
-interface Monad extends Applicative extends Chain {}
+interface Monad extends Applicative, Chain {
+  [Functor.map](f) { return this[Chain.chain](a => this.constructor[Applicative.of](f(a))); }
+}
 
-class Maybe implements Monad {
+class Maybe {
   static [Applicative.of](v) {
     return new Just(v);
   }
 }
 
-class Just extends Maybe {
+class Just extends Maybe implements Monad {
   constructor(v) {
     super();
     this.value = v;
-  }
-
-  [Functor.map](fn) {
-    return new Just(fn(this.value));
-  }
-
-  [Apply.ap](fn) {
-    return fn instanceof Just
-      ? this[Functor.map](fn.value)
-      : fn;
   }
 
   [Chain.chain](fn) {
@@ -50,19 +44,11 @@ class Just extends Maybe {
 }
 
 
-class Nothing extends Maybe {
-
-  [Functor.map](fn) {
-    return this;
-  }
-
-  [Apply.ap](fn) {
-    return this;
-  }
-
+class Nothing extends Maybe implements Monad {
   [Chain.chain](fn) {
     return this;
   }
 }
 
 Maybe[Applicative.of](42)[Functor.map](console.log);
+(new Nothing)[Apply.ap](Maybe[Applicative.of](_ => console.log('Nothing to see here!')));
