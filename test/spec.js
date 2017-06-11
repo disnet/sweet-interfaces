@@ -2,39 +2,39 @@ import test from 'ava';
 import { compileAndEval, compileTopLevel, compile } from './_compile';
 
 test('an interface is an object', t => {
-  t.deepEqual('object', compileAndEval(`
+  t.is(compileAndEval(`
     interface I {}
     return typeof I;
-  `));
+  `), 'object');
 });
 
 test('an interface has no prototype', t => {
-  t.deepEqual(null, compileAndEval(`
+  t.is(compileAndEval(`
     interface I {}
     return Object.getPrototypeOf(I);
-  `));
+  `), null);
 });
 
 test('an interface can declare a symbol', t => {
-  t.deepEqual('symbol', compileAndEval(`
+  t.is(compileAndEval(`
     interface I {
       a;
     }
     return typeof I.a;
-  `));
+  `), 'symbol');
 });
 
 test('an interface can declare a static symbol', t => {
-  t.deepEqual('symbol', compileAndEval(`
+  t.is(compileAndEval(`
     interface I {
       static a;
     }
     return typeof I.a;
-  `));
+  `), 'symbol');
 });
 
 test('an interface can declare multiple symbols', t => {
-  t.deepEqual({ a: 'symbol', b: 'symbol', c: 'symbol' }, compileAndEval(`
+  t.deepEqual(compileAndEval(`
     interface I {
       a; b;
       static c;
@@ -44,7 +44,7 @@ test('an interface can declare multiple symbols', t => {
       b: typeof I.b,
       c: typeof I.c,
     };
-  `));
+  `), { a: 'symbol', b: 'symbol', c: 'symbol' });
 });
 
 test('an interface can be exported', t => {
@@ -55,7 +55,7 @@ test('an interface can be exported', t => {
 
 
 test('a class can implement an interface', t => {
-  t.deepEqual('function', compileAndEval(`
+  t.is(compileAndEval(`
     interface I {
       a;
       b(){}
@@ -64,11 +64,11 @@ test('a class can implement an interface', t => {
       [I.a](){}
     }
     return typeof C.prototype.b;
-  `));
+  `), 'function');
 });
 
 test('a class can implement an interface with a static member', t => {
-  t.deepEqual('function', compileAndEval(`
+  t.deepEqual(compileAndEval(`
     interface I {
       a;
       static b;
@@ -79,11 +79,11 @@ test('a class can implement an interface with a static member', t => {
       static [I.b](){}
     }
     return typeof C.prototype.c;
-  `));
+  `), 'function');
 });
 
 test('a class can get a static member from an interface', t => {
-  t.deepEqual('function', compileAndEval(`
+  t.deepEqual(compileAndEval(`
     interface I {
       a;
       static b(){}
@@ -92,11 +92,11 @@ test('a class can get a static member from an interface', t => {
       [I.a](){}
     }
     return typeof C.b;
-  `));
+  `), 'function');
 });
 
 test('a class can implement multiple interfaces', t => {
-  t.deepEqual({ b: 'function', c: 'function' }, compileAndEval(`
+  t.deepEqual(compileAndEval(`
     interface I {
       a;
       b(){}
@@ -113,11 +113,11 @@ test('a class can implement multiple interfaces', t => {
       b: typeof C.prototype.b,
       c: typeof C.prototype.c,
     };
-  `));
+  `), { b: 'function', c: 'function' });
 });
 
 test('a class can extend another and implement an interface', t => {
-  t.deepEqual({ b: 'function', c: 'function', d: 'function', bA: true, bB: true }, compileAndEval(`
+  t.deepEqual(compileAndEval(`
     interface I {
       a;
       b(){}
@@ -137,7 +137,7 @@ test('a class can extend another and implement an interface', t => {
       bA: b instanceof A,
       bB: b instanceof B,
     };
-  `));
+  `), { b: 'function', c: 'function', d: 'function', bA: true, bB: true });
 });
 
 
@@ -210,7 +210,7 @@ test('proto method named constructor is early error', t => {
 
 
 test('interfaces can extend other interfaces', t => {
-  t.deepEqual({ c: 'function', d: 'function' }, compileAndEval(`
+  t.deepEqual(compileAndEval(`
     interface I {
       a;
       c(){}
@@ -228,11 +228,11 @@ test('interfaces can extend other interfaces', t => {
       c: typeof C.prototype.c,
       d: typeof C.prototype.d,
     };
-  `));
+  `), { c: 'function', d: 'function' });
 });
 
 test('minimal implementations', t => {
-  t.deepEqual({ c: 'function', d: 'function' }, compileAndEval(`
+  t.deepEqual(compileAndEval(`
     interface Functor { map; }
     interface Applicative extends Functor { pure; apply; }
     interface Monad extends Applicative { bind; join; kleisli() {} }
@@ -258,36 +258,11 @@ test('minimal implementations', t => {
       c: typeof C.prototype.kleisli,
       d: typeof D.prototype.kleisli,
     };
-  `));
+  `), { c: 'function', d: 'function' });
 });
 
 test('evaluation order is preserved', t => {
-  t.deepEqual({
-    c0: 0,
-    c1: 1,
-    c2: 2,
-    c4: 4,
-    c5: 5,
-    c6: 6,
-    d0: 0,
-    d1: 1,
-    d2: 2,
-    e4: 4,
-    e5: 5,
-    e6: 6,
-    tc0: "function",
-    tc1: "function",
-    tc2: "function",
-    tc4: "function",
-    tc5: "function",
-    tc6: "function",
-    td0: "function",
-    td1: "function",
-    td2: "function",
-    te4: "function",
-    te5: "function",
-    te6: "function",
-  }, compileAndEval(`
+  t.deepEqual(compileAndEval(`
     let counter = 0;
     interface I {
       a;
@@ -343,11 +318,36 @@ test('evaluation order is preserved', t => {
       e5: E[5](),
       e6: e[6](),
     };
-  `));
+  `), {
+    c0: 0,
+    c1: 1,
+    c2: 2,
+    c4: 4,
+    c5: 5,
+    c6: 6,
+    d0: 0,
+    d1: 1,
+    d2: 2,
+    e4: 4,
+    e5: 5,
+    e6: 6,
+    tc0: "function",
+    tc1: "function",
+    tc2: "function",
+    tc4: "function",
+    tc5: "function",
+    tc6: "function",
+    td0: "function",
+    td1: "function",
+    td2: "function",
+    te4: "function",
+    te5: "function",
+    te6: "function",
+  });
 });
 
 test('overriding methods of implemented interfaces', t => {
-  t.deepEqual(0, compileAndEval(`
+  t.is(compileAndEval(`
     interface I {
       a;
     }
@@ -360,11 +360,11 @@ test('overriding methods of implemented interfaces', t => {
       [I.a]() { return 0; }
     }
     return (new A)[I.a]();
-  `));
+  `), 0);
 });
 
 test('diamond pattern dependencies where one side introduces a needed field', t => {
-  t.deepEqual({ success: 'function', a: 'function' }, compileAndEval(`
+  t.deepEqual(compileAndEval(`
     interface A {
       a;
       success() { return 'success'; }
@@ -392,13 +392,13 @@ test('diamond pattern dependencies where one side introduces a needed field', t 
       success: typeof X.prototype.success,
       a: typeof X.prototype[A.a],
     };
-  `));
+  `), { success: 'function', a: 'function' });
 });
 
 
 
 test('implements operator', t => {
-  t.deepEqual('success', compileAndEval(`
+  t.is(compileAndEval(`
     interface I {
       a;
       f() { return this[I.a](); }
@@ -410,11 +410,11 @@ test('implements operator', t => {
     C implements I;
     let c = new C;
     return c.f();
-  `));
+  `), 'success');
 });
 
 test('implements operator chaining', t => {
-  t.deepEqual({ a: 'function', b: 'function', f: 'function', g: 'function' }, compileAndEval(`
+  t.deepEqual(compileAndEval(`
     interface I {
       a;
       f() {}
@@ -435,5 +435,5 @@ test('implements operator chaining', t => {
       f: typeof c.f,
       g: typeof c.g,
     };
-  `));
+  `), { a: 'function', b: 'function', f: 'function', g: 'function' });
 });
