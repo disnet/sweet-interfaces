@@ -10,8 +10,8 @@
   "authors": ["Tim Disney", "Michael Ficarra"],
   "license": "ISC",
   "devDependencies": {
-    "@sweet-js/cli": "^3.0.8",
-    "@sweet-js/core": "^3.0.8",
+    "@sweet-js/cli": "^3.0.9",
+    "@sweet-js/core": "^3.0.9",
     "ava": "^0.19.1",
     "tmp": "^0.0.31"
   },
