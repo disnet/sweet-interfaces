@@ -1,5 +1,5 @@
 import test from 'ava';
-import { compileAndEval, compile } from './_compile';
+import { compileAndEval, compileTopLevel, compile } from './_compile';
 
 test('an interface is an object', t => {
   t.deepEqual('object', compileAndEval(`
@@ -45,6 +45,12 @@ test('an interface can declare multiple symbols', t => {
       c: typeof I.c,
     };
   `));
+});
+
+test('an interface can be exported', t => {
+  t.regex(compileTopLevel(`
+    export interface INTERFACENAME { a; }
+  `), /\bINTERFACENAME\b/);
 });
 
 
