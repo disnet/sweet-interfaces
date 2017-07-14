@@ -63,7 +63,7 @@ test('a class can implement an interface', t => {
     class C implements I {
       [I.a](){}
     }
-    return typeof C.prototype.b;
+    return typeof C.prototype[I.b];
   `), 'function');
 });
 
@@ -78,7 +78,7 @@ test('a class can implement an interface with a static member', t => {
       [I.a](){}
       static [I.b](){}
     }
-    return typeof C.prototype.c;
+    return typeof C.prototype[I.c];
   `), 'function');
 });
 
@@ -91,7 +91,7 @@ test('a class can get a static member from an interface', t => {
     class C implements I {
       [I.a](){}
     }
-    return typeof C.b;
+    return typeof C[I.b];
   `), 'function');
 });
 
@@ -110,8 +110,8 @@ test('a class can implement multiple interfaces', t => {
       [J.b](){}
     }
     return {
-      b: typeof C.prototype.b,
-      c: typeof C.prototype.c,
+      b: typeof C.prototype[I.b],
+      c: typeof C.prototype[J.c],
     };
   `), { b: 'function', c: 'function' });
 });
@@ -131,7 +131,7 @@ test('a class can extend another and implement an interface', t => {
     }
     let b = new B;
     return {
-      b: typeof b.c,
+      b: typeof b[I.b],
       c: typeof b.c,
       d: typeof b.d,
       bA: b instanceof A,
@@ -225,8 +225,8 @@ test('interfaces can extend other interfaces', t => {
       [J.b](){}
     }
     return {
-      c: typeof C.prototype.c,
-      d: typeof C.prototype.d,
+      c: typeof C.prototype[I.c],
+      d: typeof C.prototype[J.d],
     };
   `), { c: 'function', d: 'function' });
 });
@@ -255,8 +255,8 @@ test('minimal implementations', t => {
       [Monad.join]() {}
     }
     return {
-      c: typeof C.prototype.kleisli,
-      d: typeof D.prototype.kleisli,
+      c: typeof C.prototype[Monad.kleisli],
+      d: typeof D.prototype[Monad.kleisli],
     };
   `), { c: 'function', d: 'function' });
 });
@@ -291,32 +291,32 @@ test('evaluation order is preserved', t => {
     let d = new D;
     let e = new E;
     return {
-      tc0: typeof c[0],
-      tc1: typeof C[1],
-      tc2: typeof c[2],
-      c0: c[0](),
-      c1: C[1](),
-      c2: c[2](),
-      tc4: typeof c[4],
-      tc5: typeof C[5],
-      tc6: typeof c[6],
-      c4: c[4](),
-      c5: C[5](),
-      c6: c[6](),
+      tc0: typeof c[I[0]],
+      tc1: typeof C[I[1]],
+      tc2: typeof c[I[2]],
+      c0: c[I[0]](),
+      c1: C[I[1]](),
+      c2: c[I[2]](),
+      tc4: typeof c[K[4]],
+      tc5: typeof C[K[5]],
+      tc6: typeof c[K[6]],
+      c4: c[K[4]](),
+      c5: C[K[5]](),
+      c6: c[K[6]](),
 
-      td0: typeof d[0],
-      td1: typeof D[1],
-      td2: typeof d[2],
-      d0: d[0](),
-      d1: D[1](),
-      d2: d[2](),
+      td0: typeof d[I[0]],
+      td1: typeof D[I[1]],
+      td2: typeof d[I[2]],
+      d0: d[I[0]](),
+      d1: D[I[1]](),
+      d2: d[I[2]](),
 
-      te4: typeof e[4],
-      te5: typeof E[5],
-      te6: typeof e[6],
-      e4: e[4](),
-      e5: E[5](),
-      e6: e[6](),
+      te4: typeof e[K[4]],
+      te5: typeof E[K[5]],
+      te6: typeof e[K[6]],
+      e4: e[K[4]](),
+      e5: E[K[5]](),
+      e6: e[K[6]](),
     };
   `), {
     c0: 0,
@@ -389,7 +389,7 @@ test('diamond pattern dependencies where one side introduces a needed field', t 
       [C.c]() {}
     }
     return {
-      success: typeof X.prototype.success,
+      success: typeof X.prototype[A.success],
       a: typeof X.prototype[A.a],
     };
   `), { success: 'function', a: 'function' });
@@ -409,7 +409,7 @@ test('implements operator', t => {
     }
     C implements I;
     let c = new C;
-    return c.f();
+    return c[I.f]();
   `), 'success');
 });
 
