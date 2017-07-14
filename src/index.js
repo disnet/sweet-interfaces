@@ -8,7 +8,7 @@ TODO:
 - do we actually need to put the symbols on the prototype?
 */
 
-export syntax interface = ctx => {
+export syntax protocol = ctx => {
   function join(ts) {
     return ts.reduce((accum, t) => accum.concat(t), #``);
   }

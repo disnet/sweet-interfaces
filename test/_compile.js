@@ -9,7 +9,7 @@ export function compileAndEval(code) {
 }
 
 export function compileTopLevel(code) {
-  code = `'lang sweet.js'; import { class, interface, implements } from '../src/index'; ${code}`;
+  code = `'lang sweet.js'; import { class, protocol, implements } from '../src/index'; ${code}`;
   let outFile = fileSync({ dir: __dirname });
   writeFileSync(outFile.fd, code);
 
