@@ -200,5 +200,12 @@ export syntax class = ctx => {
 }
 
 export operator implements left 5 = (left, right) => {
-  return #`${right}._mixin(${left})`;
+  return #`(function(left, right){
+    try {
+      right._check(left, [], []);
+      return true;
+    } catch (ignored) {
+      return false;
+    }
+  }(${left}, ${right}))`;
 };

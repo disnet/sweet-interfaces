@@ -395,45 +395,22 @@ test('diamond pattern dependencies where one side introduces a needed field', t 
   `), { success: 'function', a: 'function' });
 });
 
-
-
 test('implements operator', t => {
-  t.is(compileAndEval(`
-    protocol I {
-      a;
-      f() { return this[I.a](); }
-    }
-    class C {
-      constructor() { this.x = 0; }
-      [I.a]() { return 'success'; }
-    }
-    C implements I;
-    let c = new C;
-    return c[I.f]();
-  `), 'success');
-});
-
-test('implements operator chaining', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
       a;
-      f() {}
+      b() {}
     }
     protocol K {
-      b;
-      g() {}
+      a;
+      b() {}
     }
     class C {
       [I.a]() {}
-      [K.b]() {}
     }
-    C implements I implements K;
-    let c = new C;
     return {
-      a: typeof c[I.a],
-      b: typeof c[K.b],
-      f: typeof c.f,
-      g: typeof c.g,
+      i: C implements I,
+      k: C implements K,
     };
-  `), { a: 'function', b: 'function', f: 'function', g: 'function' });
+  `), { i: true, k: false});
 });
