@@ -3,21 +3,21 @@ import { compileAndEval, compileTopLevel, compile } from './_compile';
 
 test('an interface is an object', t => {
   t.is(compileAndEval(`
-    interface I {}
+    protocol I {}
     return typeof I;
   `), 'object');
 });
 
 test('an interface has no prototype', t => {
   t.is(compileAndEval(`
-    interface I {}
+    protocol I {}
     return Object.getPrototypeOf(I);
   `), null);
 });
 
 test('an interface can declare a symbol', t => {
   t.is(compileAndEval(`
-    interface I {
+    protocol I {
       a;
     }
     return typeof I.a;
@@ -26,7 +26,7 @@ test('an interface can declare a symbol', t => {
 
 test('an interface can declare a static symbol', t => {
   t.is(compileAndEval(`
-    interface I {
+    protocol I {
       static a;
     }
     return typeof I.a;
@@ -35,7 +35,7 @@ test('an interface can declare a static symbol', t => {
 
 test('an interface can declare multiple symbols', t => {
   t.deepEqual(compileAndEval(`
-    interface I {
+    protocol I {
       a; b;
       static c;
     }
@@ -49,14 +49,14 @@ test('an interface can declare multiple symbols', t => {
 
 test('an interface can be exported', t => {
   t.regex(compileTopLevel(`
-    export interface INTERFACENAME { a; }
+    export protocol INTERFACENAME { a; }
   `), /\bINTERFACENAME\b/);
 });
 
 
 test('a class can implement an interface', t => {
   t.is(compileAndEval(`
-    interface I {
+    protocol I {
       a;
       b(){}
     }
@@ -69,7 +69,7 @@ test('a class can implement an interface', t => {
 
 test('a class can implement an interface with a static member', t => {
   t.deepEqual(compileAndEval(`
-    interface I {
+    protocol I {
       a;
       static b;
       c(){}
@@ -84,7 +84,7 @@ test('a class can implement an interface with a static member', t => {
 
 test('a class can get a static member from an interface', t => {
   t.deepEqual(compileAndEval(`
-    interface I {
+    protocol I {
       a;
       static b(){}
     }
@@ -97,11 +97,11 @@ test('a class can get a static member from an interface', t => {
 
 test('a class can implement multiple interfaces', t => {
   t.deepEqual(compileAndEval(`
-    interface I {
+    protocol I {
       a;
       b(){}
     }
-    interface J {
+    protocol J {
       b;
       c(){}
     }
@@ -118,7 +118,7 @@ test('a class can implement multiple interfaces', t => {
 
 test('a class can extend another and implement an interface', t => {
   t.deepEqual(compileAndEval(`
-    interface I {
+    protocol I {
       a;
       b(){}
     }
@@ -143,7 +143,7 @@ test('a class can extend another and implement an interface', t => {
 
 test('an unimplemented interface throws', t => {
   let code = compile(`
-    interface I { a; }
+    protocol I { a; }
     class C implements I {}
   `);
   t.throws(() => { eval(code); });
@@ -151,7 +151,7 @@ test('an unimplemented interface throws', t => {
 
 test('an unimplemented static interface throws', t => {
   let code = compile(`
-    interface I { static a; }
+    protocol I { static a; }
     class C implements I {}
   `);
   t.throws(() => { eval(code); });
@@ -159,67 +159,67 @@ test('an unimplemented static interface throws', t => {
 
 test('duplicate interface fields is early error', t => {
   t.throws(() => {
-    compile(`interface I { a; b; a; }`);
+    compile(`protocol I { a; b; a; }`);
   });
 });
 
 test('duplicate static interface fields is early error', t => {
   t.throws(() => {
-    compile(`interface I { static a; static b; static a; }`);
+    compile(`protocol I { static a; static b; static a; }`);
   });
 });
 
 test('same name static and prototype fields is early error', t => {
   t.throws(() => {
-    compile(`interface I { a; static a; }`);
+    compile(`protocol I { a; static a; }`);
   });
   t.throws(() => {
-    compile(`interface I { static a; a; }`);
+    compile(`protocol I { static a; a; }`);
   });
 });
 
 test('static method named prototype is early error', t => {
   t.notThrows(() => {
-    compile(`interface I { prototype; }`);
+    compile(`protocol I { prototype; }`);
   });
   t.notThrows(() => {
-    compile(`interface I { static prototype; }`);
+    compile(`protocol I { static prototype; }`);
   });
   t.notThrows(() => {
-    compile(`interface I { prototype(){} }`);
+    compile(`protocol I { prototype(){} }`);
   });
   t.throws(() => {
-    compile(`interface I { static prototype(){} }`);
+    compile(`protocol I { static prototype(){} }`);
   });
 });
 
 test('proto method named constructor is early error', t => {
   t.notThrows(() => {
-    compile(`interface I { constructor; }`);
+    compile(`protocol I { constructor; }`);
   });
   t.notThrows(() => {
-    compile(`interface I { static constructor; }`);
+    compile(`protocol I { static constructor; }`);
   });
   t.throws(() => {
-    compile(`interface I { constructor(){} }`);
+    compile(`protocol I { constructor(){} }`);
   });
   t.notThrows(() => {
-    compile(`interface I { static constructor(){} }`);
+    compile(`protocol I { static constructor(){} }`);
   });
 });
 
 
 test('interfaces can extend other interfaces', t => {
   t.deepEqual(compileAndEval(`
-    interface I {
+    protocol I {
       a;
       c(){}
     }
-    interface J {
+    protocol J {
       b;
       d(){}
     }
-    interface K extends I, J {}
+    protocol K extends I, J {}
     class C implements K {
       [I.a](){}
       [J.b](){}
@@ -233,13 +233,13 @@ test('interfaces can extend other interfaces', t => {
 
 test('minimal implementations', t => {
   t.deepEqual(compileAndEval(`
-    interface Functor { map; }
-    interface Applicative extends Functor { pure; apply; }
-    interface Monad extends Applicative { bind; join; kleisli() {} }
-    interface MonadViaBind extends Monad {
+    protocol Functor { map; }
+    protocol Applicative extends Functor { pure; apply; }
+    protocol Monad extends Applicative { bind; join; kleisli() {} }
+    protocol MonadViaBind extends Monad {
       [Monad.join]() {}
     }
-    interface MonadViaJoin extends Monad {
+    protocol MonadViaJoin extends Monad {
       [Monad.bind]() {}
     }
     class C implements MonadViaBind {
@@ -264,13 +264,13 @@ test('minimal implementations', t => {
 test('evaluation order is preserved', t => {
   t.deepEqual(compileAndEval(`
     let counter = 0;
-    interface I {
+    protocol I {
       a;
       [counter++]() { return 0; }
       static [counter++]() { return 1; }
       [counter++]() { return 2; }
     }
-    interface K extends (counter++, I) {
+    protocol K extends (counter++, I) {
       b;
       [counter++]() { return 4; }
       static [counter++]() { return 5; }
@@ -348,10 +348,10 @@ test('evaluation order is preserved', t => {
 
 test('overriding methods of implemented interfaces', t => {
   t.is(compileAndEval(`
-    interface I {
+    protocol I {
       a;
     }
-    interface J extends I {
+    protocol J extends I {
       b;
       [I.a]() { return 5; }
     }
@@ -365,21 +365,21 @@ test('overriding methods of implemented interfaces', t => {
 
 test('diamond pattern dependencies where one side introduces a needed field', t => {
   t.deepEqual(compileAndEval(`
-    interface A {
+    protocol A {
       a;
       success() { return 'success'; }
     }
 
-    interface B0 extends A {
+    protocol B0 extends A {
       b0;
     }
 
-    interface B1 extends A {
+    protocol B1 extends A {
       b1;
       [A.a]() {}
     }
 
-    interface C extends B0, B1 {
+    protocol C extends B0, B1 {
       c;
     }
 
@@ -399,7 +399,7 @@ test('diamond pattern dependencies where one side introduces a needed field', t 
 
 test('implements operator', t => {
   t.is(compileAndEval(`
-    interface I {
+    protocol I {
       a;
       f() { return this[I.a](); }
     }
@@ -415,11 +415,11 @@ test('implements operator', t => {
 
 test('implements operator chaining', t => {
   t.deepEqual(compileAndEval(`
-    interface I {
+    protocol I {
       a;
       f() {}
     }
-    interface K {
+    protocol K {
       b;
       g() {}
     }
