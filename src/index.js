@@ -124,6 +124,12 @@ export syntax protocol = ctx => {
 
   return #`
   const ${name} = (function() {
+    if (typeof Reflect !== 'undefined' && typeof Reflect.implement === 'undefined') {
+      Reflect.implement = function(C, I) {
+        return I._mixin(C);
+      }
+    }
+
     const _extends = [${join(_extends)}];
     ${join(cachedFieldNames)}
     return Object.create(null, {

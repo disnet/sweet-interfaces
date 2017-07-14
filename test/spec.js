@@ -414,3 +414,44 @@ test('implements operator', t => {
     };
   `), { i: true, k: false});
 });
+
+test('implement is a method on Reflect', t => {
+  t.is(compileAndEval(`
+    protocol I {
+      a;
+      f() { return this[I.a](); }
+    }
+    class C {
+      constructor() { this.x = 0; }
+      [I.a]() { return 'success'; }
+    }
+    Reflect.implement(C, I);
+    let c = new C;
+    return c[I.f]();
+  `), 'success');
+});
+
+test('Reflect.implement operator chaining', t => {
+  t.deepEqual(compileAndEval(`
+    protocol I {
+      a;
+      f() {}
+    }
+    protocol K {
+      b;
+      g() {}
+    }
+    class C {
+      [I.a]() {}
+      [K.b]() {}
+    }
+    Reflect.implement(Reflect.implement(C, I), K);
+    let c = new C;
+    return {
+      a: typeof c[I.a],
+      b: typeof c[K.b],
+      f: typeof c[I.f],
+      g: typeof c[K.g],
+    };
+  `), { a: 'function', b: 'function', f: 'function', g: 'function' });
+});
