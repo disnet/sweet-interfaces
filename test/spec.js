@@ -431,7 +431,7 @@ test('implement is a method on Reflect', t => {
   `), 'success');
 });
 
-test('Reflect.implement operator chaining', t => {
+test('Reflect.implement mutates and returns first parameter', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
       a;
@@ -446,6 +446,31 @@ test('Reflect.implement operator chaining', t => {
       [K.b]() {}
     }
     Reflect.implement(Reflect.implement(C, I), K);
+    let c = new C;
+    return {
+      a: typeof c[I.a],
+      b: typeof c[K.b],
+      f: typeof c[I.f],
+      g: typeof c[K.g],
+    };
+  `), { a: 'function', b: 'function', f: 'function', g: 'function' });
+});
+
+test('Reflect.implement accepts 1 or more interfaces', t => {
+  t.deepEqual(compileAndEval(`
+    protocol I {
+      a;
+      f() {}
+    }
+    protocol K {
+      b;
+      g() {}
+    }
+    class C {
+      [I.a]() {}
+      [K.b]() {}
+    }
+    Reflect.implement(C, I, K);
     let c = new C;
     return {
       a: typeof c[I.a],

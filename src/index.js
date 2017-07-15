@@ -125,9 +125,10 @@ export syntax protocol = ctx => {
   return #`
   const ${name} = (function() {
     if (typeof Reflect !== 'undefined' && typeof Reflect.implement === 'undefined') {
-      Reflect.implement = function(C, I) {
-        return I._mixin(C);
-      }
+      Reflect.implement = function(C, ...is) {
+        is.forEach(i => i._mixin(C));
+        return C;
+      };
     }
 
     const _extends = [${join(_extends)}];
