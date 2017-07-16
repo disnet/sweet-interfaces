@@ -134,6 +134,10 @@ export syntax protocol = ctx => {
     const _extends = [${join(_extends)}];
     ${join(cachedFieldNames)}
     return Object.create(null, {
+      _name: {
+        value: ${fromStringLiteral(name, unwrap(name).value)},
+        configurable: false, writable: false, enumerable: false
+      },
       ${join(fieldGetters)}
       _extends: {
         value: _extends,
@@ -147,17 +151,20 @@ export syntax protocol = ctx => {
         value: [${join(methodDescriptors)}],
         configurable: false, writable: false, enumerable: false
       },
-      _check: { value: function (klass, staticIgnoring, protoIgnoring) {
-        let inheritedFields = this._methods.map(m => this._fields[m.name]);
-        let fieldsWhichMustBeImplemented = Object.values(this._fields).filter(n => !inheritedFields.includes(n));
+      _unimplemented: { value: function (klass) {
+        let fieldsWhichWillBeInherited = this._collect(i => i._methods.map(m => i._fields[m.name].value));
+        return this._collect(i => i._unimplementedHelper(klass, fieldsWhichWillBeInherited));
+      }, configurable: false, writable: false, enumerable: false},
+      _unimplementedHelper: { value: function (klass, fieldsWhichWillBeInherited) {
+        let fieldsWhichMustBeImplemented = Object.values(this._fields);
+        let unimplemented = [];
         for (let field of fieldsWhichMustBeImplemented) {
           let target = field.isStatic ? klass : klass.prototype;
-          let ignoring = field.isStatic ? staticIgnoring : protoIgnoring;
-          if (!ignoring.map(i => i.name).includes(field.value) && target[field.value] == null) {
-            throw new Error(field.value.toString() + ' not implemented by ' + klass);
+          if (!(field.value in target) && !fieldsWhichWillBeInherited.includes(field.value)) {
+            unimplemented.push(field);
           }
         }
-        this._extends.forEach(s => { s._check(klass, staticIgnoring, protoIgnoring); });
+        return unimplemented;
       }, configurable: false, writable: false, enumerable: false},
       _collect: { value: function (fn) {
         return [...fn(this), ...[].concat.apply([], this._extends.map(i => i._collect(fn)))];
@@ -165,11 +172,10 @@ export syntax protocol = ctx => {
       _mixin: { value: function (klass) {
         let fields = this._collect(i => [i._fields])
           .reduceRight((allFields, fields) => Object.assign(allFields, fields), {});
-        this._check(
-          klass,
-          this._collect(i => i._methods.filter(m => m.isStatic).map(m => fields[m.name])),
-          this._collect(i => i._methods.filter(m => !m.isStatic).map(m => fields[m.name])),
-        );
+        let unimplementedFieldNames = this._unimplemented(klass);
+        if (unimplementedFieldNames.length > 0) {
+          throw new Error(unimplementedFieldNames.map(f => f.value.toString()).join(', ') + ' not implemented by ' + klass);
+        }
         let methods = this._collect(i => i._methods);
         methods.forEach(m=> {
           let target = m.isStatic ? klass : klass.prototype;
@@ -207,12 +213,5 @@ export syntax class = ctx => {
 }
 
 export operator implements left 5 = (left, right) => {
-  return #`(function(left, right){
-    try {
-      right._check(left, [], []);
-      return true;
-    } catch (ignored) {
-      return false;
-    }
-  }(${left}, ${right}))`;
+  return #`((left, right) => right._unimplemented(left).length <= 0)(${left}, ${right})`;
 };
