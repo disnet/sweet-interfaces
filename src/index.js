@@ -134,27 +134,34 @@ export syntax protocol = ctx => {
     const _extends = [${join(_extends)}];
     ${join(cachedFieldNames)}
     return Object.create(null, {
+
       _name: {
         value: ${fromStringLiteral(name, unwrap(name).value)},
         configurable: false, writable: false, enumerable: false
       },
+
       ${join(fieldGetters)}
+
       _extends: {
         value: _extends,
         configurable: false, writable: false, enumerable: false
       },
+
       _fields: {
         value: {${join(fieldDescriptors)}},
         configurable: false, writable: false, enumerable: false
       },
+
       _methods: {
         value: [${join(methodDescriptors)}],
         configurable: false, writable: false, enumerable: false
       },
+
       _unimplemented: { value: function (klass) {
         let fieldsWhichWillBeInherited = this._collect(i => i._methods.map(m => i._fields[m.name].value));
         return this._collect(i => i._unimplementedHelper(klass, fieldsWhichWillBeInherited));
       }, configurable: false, writable: false, enumerable: false},
+
       _unimplementedHelper: { value: function (klass, fieldsWhichWillBeInherited) {
         let fieldsWhichMustBeImplemented = Object.values(this._fields);
         let unimplemented = [];
@@ -166,9 +173,11 @@ export syntax protocol = ctx => {
         }
         return unimplemented;
       }, configurable: false, writable: false, enumerable: false},
+
       _collect: { value: function (fn) {
         return [...fn(this), ...[].concat.apply([], this._extends.map(i => i._collect(fn)))];
       }, configurable: false, writable: false, enumerable: false},
+
       _mixin: { value: function (klass) {
         let fields = this._collect(i => [i._fields])
           .reduceRight((allFields, fields) => Object.assign(allFields, fields), {});
