@@ -14,7 +14,7 @@ export syntax protocol = ctx => {
   }
 
   let here = #`here`.first();
-  let name = matchIdentifier(ctx);
+  let interfaceName = matchIdentifier(ctx);
   let extendsClause = matchInterfaceExtendsClause(ctx);
   let body = matchBraces(ctx);
   let inner = ctx.contextify(body);
@@ -33,7 +33,7 @@ export syntax protocol = ctx => {
     }
   }
   let dupField = firstDuplicate(fields.map(i => unwrap(i.name).value));
-  if (dupField != null) throw new Error('interface "' + unwrap(name).value + '" declares field nameed "' + dupField + '" more than once');
+  if (dupField != null) throw new Error('interface "' + unwrap(interfaceName).value + '" declares field nameed "' + dupField + '" more than once');
 
   if (items.some(i => i.type === 'method' && i.isStatic && isIdentifier(i.name) && unwrap(i.name).value === 'prototype')) {
     throw new Error('illegal static method named "prototype"');
@@ -105,7 +105,7 @@ export syntax protocol = ctx => {
       stx = i.name;
       symbolDesc = unwrap(i.name).value;
     }
-    let fieldName = fromStringLiteral(stx, unwrap(name).value + '.' + symbolDesc);
+    let fieldName = fromStringLiteral(stx, unwrap(interfaceName).value + '.' + symbolDesc);
     let hasComputedName = !isIdentifier(i.name) && !isKeyword(i.name);
     return #`${usingCache(i.name, idx)}: {
       isStatic: ${i.isStatic ? #`true` : #`false`},
@@ -123,7 +123,7 @@ export syntax protocol = ctx => {
   let _extends = extendsClause.map(e => #`${e},`);
 
   return #`
-  const ${name} = (function() {
+  const ${interfaceName} = (function() {
     if (typeof Reflect !== 'undefined' && typeof Reflect.implement === 'undefined') {
       Reflect.implement = function(C, ...is) {
         is.forEach(i => i._mixin(C));
@@ -136,7 +136,7 @@ export syntax protocol = ctx => {
     return Object.create(null, {
 
       _name: {
-        value: ${fromStringLiteral(name, unwrap(name).value)},
+        value: ${fromStringLiteral(interfaceName, unwrap(interfaceName).value)},
         configurable: false, writable: false, enumerable: false
       },
 
@@ -179,21 +179,22 @@ export syntax protocol = ctx => {
       }, configurable: false, writable: false, enumerable: false},
 
       _mixin: { value: function (klass) {
-        let fields = this._collect(i => [i._fields])
-          .reduceRight((allFields, fields) => Object.assign(allFields, fields), {});
+        let allFields = this._collect(i => [i._fields])
+          .reduceRight((memo, fs) => Object.assign(memo, fs), {});
         let unimplementedFieldNames = this._unimplemented(klass);
         if (unimplementedFieldNames.length > 0) {
           throw new Error(unimplementedFieldNames.map(f => f.value.toString()).join(', ') + ' not implemented by ' + klass);
         }
-        let methods = this._collect(i => i._methods);
-        methods.forEach(m=> {
-          let target = m.isStatic ? klass : klass.prototype;
-          let name = fields[m.name].value;
-          if ({}.hasOwnProperty.call(target, name)) return;
+        let allMethods = this._collect(i => i._methods);
+        // TODO: https://github.com/sweet-js/sweet-core/issues/733
+        allMethods.forEach(({isStatic: isStatic, name: name, value: value}) => {
+          let target = isStatic ? klass : klass.prototype;
+          let symbol = allFields[name].value;
+          if ({}.hasOwnProperty.call(target, symbol)) return;
           Object.defineProperty(
             target,
-            name,
-            { value: m.value, configurable: true, writable: true, enumerable: m.isStatic }
+            symbol,
+            { value, configurable: true, writable: true, enumerable: isStatic }
           );
         });
         return klass;
@@ -208,16 +209,16 @@ export syntax class = ctx => {
     return ts.reduce((accum, t) => accum.concat(t), #``);
   }
 
-  let name = matchIdentifier(ctx);
+  let className = matchIdentifier(ctx);
   let extendsClause = matchClassExtendsClause(ctx);
-  let impl = matchImplements(ctx);
-  let body = matchBraces(ctx);
+  let implementsClauses = matchImplements(ctx);
+  let classBody = matchBraces(ctx);
 
   let _extends = extendsClause.length === 1 ? #`extends ${extendsClause[0]}` : #``;
 
   return #`
-    class ${name} ${_extends} ${body}
-    ${join(impl.map(i => #`(${i.value})._mixin(${name});`))}
+    class ${className} ${_extends} ${classBody}
+    ${join(implementsClauses.map(i => #`(${i.value})._mixin(${className});`))}
   `
 }
 

@@ -1,5 +1,5 @@
 'lang sweet.js';
-import { class, interface, implements } from './src/index';
+import { class, protocol, implements } from './src/index';
 
 const _const = x => () => x;
 const _id = x => x;
