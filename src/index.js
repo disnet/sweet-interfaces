@@ -223,5 +223,5 @@ export syntax class = ctx => {
 }
 
 export operator implements left 5 = (left, right) => {
-  return #`((left, right) => right._unimplemented(left).length <= 0)(${left}, ${right})`;
+  return #`((left, right) => right._unimplementedHelper(left, []).length <= 0)(${left}, ${right})`;
 };

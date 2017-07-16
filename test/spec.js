@@ -408,11 +408,22 @@ test('implements operator', t => {
     class C {
       [I.a]() {}
     }
+    class D implements I {
+      [I.a]() {}
+    }
+    class E {
+      [I.a]() {}
+      [I.b]() {}
+    }
     return {
-      i: C implements I,
-      k: C implements K,
+      ci: C implements I,
+      ck: C implements K,
+      di: D implements I,
+      dk: D implements K,
+      ei: E implements I,
+      ek: E implements K,
     };
-  `), { i: true, k: false});
+  `), { ci: false, ck: false, di: true, dk: false, ei: true, ek: false });
 });
 
 test('implement is a method on Reflect', t => {
