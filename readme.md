@@ -10,14 +10,14 @@ npm install @sweet-js/cli sweet-interfaces
 
 ## Use
 
-Import `class`, `interface`, and `implements` from the `sweet-interfaces` packages:
+Import `class`, `protocol`, and `implements` from the `sweet-interfaces` packages:
 
 ```js
 // maybe.js
 'lang sweet.js';
-import { class, interface, implements } from 'sweet-interfaces';
+import { class, protocol, implements } from 'sweet-interfaces';
 
-interface Functor {
+protocol Functor {
   map;
 }
 
