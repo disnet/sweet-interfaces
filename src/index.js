@@ -126,6 +126,10 @@ export syntax protocol = ctx => {
   const ${interfaceName} = (function() {
     if (typeof Reflect !== 'undefined' && typeof Reflect.implement === 'undefined') {
       Reflect.implement = function(C, ...is) {
+        // this is a best effort IsConstructor check on C
+        if (typeof C !== 'function' || !C.prototype) {
+          throw new TypeError('first parameter must have a [[Construct]] internal slot');
+        }
         is.forEach(i => i._mixin(C));
         return C;
       };
