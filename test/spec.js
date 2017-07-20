@@ -442,6 +442,24 @@ test('implement is a method on Reflect', t => {
   `), 'success');
 });
 
+test('Reflect.implement throws TypeError when first argument is not a constructor', t => {
+  let _null = compile(`
+    protocol I { }
+    Reflect.implement(null, I);
+  `);
+  t.throws(() => { eval(_null); });
+  let object = compile(`
+    protocol I { }
+    Reflect.implement({}, I);
+  `);
+  t.throws(() => { eval(object); });
+  let missing = compile(`
+    protocol I { }
+    Reflect.implement();
+  `);
+  t.throws(() => { eval(missing); });
+});
+
 test('Reflect.implement mutates and returns first parameter', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
