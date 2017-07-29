@@ -118,6 +118,7 @@ export syntax protocol = ctx => {
   let methodDescriptors = methods.map(i => #`{
     isStatic: ${i.isStatic ? #`true` : #`false`},
     name: ${toDefinePropertyString(usingCache(i.name, items.indexOf(i)))},
+    descType: ${fromStringLiteral(here, i.descType)},
     value: function ${i.parens} ${i.body},
   },`);
   let _extends = extendsClause.map(e => #`${e},`);
@@ -191,15 +192,14 @@ export syntax protocol = ctx => {
         }
         let allMethods = this._collect(i => i._methods);
         // TODO: https://github.com/sweet-js/sweet-core/issues/733
-        allMethods.forEach(({isStatic: isStatic, name: name, value: value}) => {
+        allMethods.forEach(({isStatic: isStatic, name: name, descType: descType, value: value}) => {
           let target = isStatic ? klass : klass.prototype;
           let symbol = allFields[name].value;
           if ({}.hasOwnProperty.call(target, symbol)) return;
-          Object.defineProperty(
-            target,
-            symbol,
-            { value, configurable: true, writable: true, enumerable: isStatic }
-          );
+          let desc = { configurable: true, enumerable: isStatic };
+          desc[descType] = value;
+          if (descType === 'value') desc.writable = true;
+          Object.defineProperty(target, symbol, desc);
         });
         return klass;
       }, configurable: false, writable: false, enumerable: false},

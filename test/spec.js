@@ -95,6 +95,46 @@ test('a class can get a static member from an interface', t => {
   `), 'function');
 });
 
+test('a class can implement an interface with a getter/setter', t => {
+  t.deepEqual(compileAndEval(`
+    protocol I {
+      a;
+      get b() {}
+      set c(d) {}
+    }
+    class C implements I {
+      [I.a](){}
+    }
+    return {
+      b: typeof Object.getOwnPropertyDescriptor(C.prototype, I.b).get,
+      c: typeof Object.getOwnPropertyDescriptor(C.prototype, I.c).set,
+    };
+  `), {
+    b: 'function',
+    c: 'function',
+  });
+});
+
+test('a class can implement an interface with a static getter/setter', t => {
+  t.deepEqual(compileAndEval(`
+    protocol I {
+      a;
+      static get b() {}
+      static set c(d) {}
+    }
+    class C implements I {
+      [I.a](){}
+    }
+    return {
+      b: typeof Object.getOwnPropertyDescriptor(C, I.b).get,
+      c: typeof Object.getOwnPropertyDescriptor(C, I.c).set,
+    };
+  `), {
+    b: 'function',
+    c: 'function',
+  });
+});
+
 test('a class can implement multiple interfaces', t => {
   t.deepEqual(compileAndEval(`
     protocol I {

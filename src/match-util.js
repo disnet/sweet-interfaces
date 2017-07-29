@@ -21,6 +21,14 @@ export function matchIdentifier(ctx) {
   return t.value;
 }
 
+export function getDescType(t) {
+  if (isIdentifier(t)) {
+    let name = unwrap(t).value;
+    if (name === 'get' || name === 'set') return name;
+  }
+  return 'value';
+}
+
 export function isStatic(t) {
   return isIdentifier(t) && unwrap(t).value === 'static';
 }
@@ -111,9 +119,13 @@ function matchInterfaceMethod(ctx) {
   if (_static) {
     name = matchPropertyName(ctx);
   }
+  let descType = getDescType(name);
+  if (descType === 'get' || descType === 'set') {
+    name = matchPropertyName(ctx);
+  }
   let parens = matchParens(ctx);
   let body = matchBraces(ctx);
-  return { type: 'method', isStatic: _static, name, parens, body };
+  return { type: 'method', isStatic: _static, descType, name, parens, body };
 }
 
 function isDone(ctx) {
