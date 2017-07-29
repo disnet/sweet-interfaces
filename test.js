@@ -1,90 +1,43 @@
 'lang sweet.js';
 import { class, protocol, implements } from './src/index';
 
-const _const = x => () => x;
-const _id = x => x;
+protocol Foldable {
+  foldr;
 
-interface Functor {
-  map;
-
-  void() {
-    return this[Functor.map](() => void 0);
+  toArray() {
+    return this[Foldable.foldr](
+      (m, a) => [a].concat(m),
+      []
+    );
   }
 
-  voidRight(x) {
-    return this[Functor.map](() => x);
-  }
-}
-
-Function.prototype[Functor.map] = function(g) {
-  return x => this(g(x));
-};
-Function implements Functor;
-
-
-interface Apply extends Functor {
-  apply;
-
-  applyFirst(b) {
-    return _const[Functor.map](this)[Apply.apply](b);
+  get length() {
+    return this[Foldable.foldr](m => m + 1, 0);
   }
 
-  applySecond(x) {
-    return _const(_id)[Functor.map](this)[Apply.apply](b);
-  }
-
-  lift2(f) {
-    return a => b => f[Functor.map](a)[Apply.apply](b);
+  contains(eq, e) {
+    return this[Foldable.foldr](
+      (m, a) => m || eq(a, e),
+      false
+    );
   }
 }
 
-Function.prototype[Apply.apply] = function (g) {
-  return x => this(x)(g(x));
-};
-Function implements Apply;
+class NEList implements Foldable {
+  constructor(head, tail) {
+    this.head = head;
+    this.tail = tail;
+  }
 
-
-interface Applicative extends Apply {
-  static pure;
-
-  when(b) {
-    return b ? _id : _const(this[Applicative.pure](void 0));
+  [Foldable.foldr](f, memo) {
+    if (this.tail != null) memo =
+      this.tail[Foldable.foldr](f, memo);
+    return f(memo, this.head);      
   }
 }
 
+let a = new NEList(1, null);
+let b = new NEList(0, a);
 
-class Maybe implements Applicative {
-  static [Applicative.pure](x) {
-    return new Just(x);
-  }
-}
-
-class Just extends Maybe {
-  constructor(value) {
-    super();
-    this.value = value;
-  }
-
-  [Functor.map](fn) {
-    return new Just(fn(this.value));
-  }
-
-  [Apply.apply](x) {
-    return x[Functor.map](this.value);
-  }
-}
-class Nothing extends Maybe {
-  [Functor.map](fn) {
-    return this;
-  }
-
-  [Apply.apply](x) {
-    return this;
-  }
-}
-
-let j = new Just(1);
-
-console.log(Object.getOwnPropertySymbols());
-
-new Just(1)[Functor.map](console.log);
+console.log(b[Foldable.toArray]());
+console.log(b[Foldable.length]);
