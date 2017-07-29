@@ -222,7 +222,10 @@ export syntax class = ctx => {
 
   return #`
     class ${className} ${_extends} ${classBody}
-    ${join(implementsClauses.map(i => #`(${i.value})._mixin(${className});`))}
+    ${implementsClauses.length > 0
+      ? #`Reflect.implement(${className}${join(implementsClauses.map(i => #`, ${i.value}`))})`
+      : #``
+    }
   `
 }
 
