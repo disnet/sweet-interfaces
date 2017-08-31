@@ -3,20 +3,26 @@
   "version": "0.5.0",
   "description": "an implementation of the ECMAScript interfaces proposal with macros",
   "main": "src/index.js",
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "scripts": {
     "test": "ava"
   },
-  "authors": ["Tim Disney", "Michael Ficarra"],
+  "authors": [
+    "Tim Disney",
+    "Michael Ficarra"
+  ],
   "license": "ISC",
   "devDependencies": {
-    "@sweet-js/cli": "^3.0.10",
-    "@sweet-js/core": "^3.0.10",
-    "ava": "^0.19.1",
-    "tmp": "^0.0.31"
+    "@sweet-js/cli": "^3.0.13",
+    "@sweet-js/core": "^3.0.13",
+    "ava": "^0.22.0",
+    "babel-core": "6.26.0",
+    "tmp": "^0.0.33"
   },
   "dependencies": {
-    "@sweet-js/helpers": "^3.0.0"
+    "@sweet-js/helpers": "^4.0.1"
   },
   "ava": {
     "files": [

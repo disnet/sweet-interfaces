@@ -11,7 +11,7 @@ test('an interface is an object', t => {
 test('an interface has no prototype', t => {
   t.is(compileAndEval(`
     protocol I {}
-    return Object.getPrototypeOf(I);
+    return Object.getPrototypeOf(Object.getPrototypeOf(I));
   `), null);
 });
 
@@ -466,7 +466,7 @@ test('implements operator', t => {
   `), { ci: false, ck: false, di: true, dk: false, ei: true, ek: false });
 });
 
-test('implement is a method on Reflect', t => {
+test('implement is a method on Protocol', t => {
   t.is(compileAndEval(`
     protocol I {
       a;
@@ -476,31 +476,31 @@ test('implement is a method on Reflect', t => {
       constructor() { this.x = 0; }
       [I.a]() { return 'success'; }
     }
-    Reflect.implement(C, I);
+    Protocol.implement(C, I);
     let c = new C;
     return c[I.f]();
   `), 'success');
 });
 
-test('Reflect.implement throws TypeError when first argument is not a constructor', t => {
+test('Protocol.implement throws TypeError when first argument is not a constructor', t => {
   let _null = compile(`
     protocol I { }
-    Reflect.implement(null, I);
+    Protocol.implement(null, I);
   `);
   t.throws(() => { eval(_null); });
   let object = compile(`
     protocol I { }
-    Reflect.implement({}, I);
+    Protocol.implement({}, I);
   `);
   t.throws(() => { eval(object); });
   let missing = compile(`
     protocol I { }
-    Reflect.implement();
+    Protocol.implement();
   `);
   t.throws(() => { eval(missing); });
 });
 
-test('Reflect.implement mutates and returns first parameter', t => {
+test('Protocol.implement mutates and returns first parameter', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
       a;
@@ -514,7 +514,7 @@ test('Reflect.implement mutates and returns first parameter', t => {
       [I.a]() {}
       [K.b]() {}
     }
-    Reflect.implement(Reflect.implement(C, I), K);
+    Protocol.implement(Protocol.implement(C, I), K);
     let c = new C;
     return {
       a: typeof c[I.a],
@@ -525,7 +525,7 @@ test('Reflect.implement mutates and returns first parameter', t => {
   `), { a: 'function', b: 'function', f: 'function', g: 'function' });
 });
 
-test('Reflect.implement accepts 1 or more interfaces', t => {
+test('Protocol.implement accepts 1 or more interfaces', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
       a;
@@ -539,7 +539,7 @@ test('Reflect.implement accepts 1 or more interfaces', t => {
       [I.a]() {}
       [K.b]() {}
     }
-    Reflect.implement(C, I, K);
+    Protocol.implement(C, I, K);
     let c = new C;
     return {
       a: typeof c[I.a],

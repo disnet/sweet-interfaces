@@ -4,12 +4,14 @@ import { transform } from 'babel-core';
 import { writeFileSync, readFileSync } from 'fs';
 import { fileSync } from 'tmp';
 
+const POLYFILL = readFileSync(__dirname + '/../polyfill.js');
+
 export function compileAndEval(code) {
   return eval(compile(code));
 }
 
 export function compileTopLevel(code) {
-  code = `'lang sweet.js'; import { class, protocol, implements } from '../src/index'; ${code}`;
+  code = `'lang sweet.js'; import { class, protocol, implements } from '../'; ${POLYFILL}\n; ${code}`;
   let outFile = fileSync({ dir: __dirname });
   writeFileSync(outFile.fd, code);
 
