@@ -114,14 +114,20 @@ if (typeof Protocol === 'undefined') {
 
       Object.defineProperties(
         klass.prototype,
-        this._collect(i => _entries(i._protoProperties).map(([name, desc]) => [i[name], desc]))
-          .reduceRight(_foldToObject, {})
+        this._collect(i => {
+          return _entries(i._protoProperties)
+            .filter(function ([name]) { console.log(name); return !(name in klass.prototype); })
+            .map(([name, desc]) => [i[name], desc]);
+        }).reduceRight(_foldToObject, {})
       );
 
       Object.defineProperties(
         klass,
-        this._collect(i => _entries(i._staticProperties).map(([name, desc]) => [i[name], desc]))
-          .reduceRight(_foldToObject, {})
+        this._collect(i =>
+          _entries(i._staticProperties)
+            .filter(function ([name]) { console.log(name); return !(name in klass); })
+            .map(([name, desc]) => [i[name], desc]))
+        .reduceRight(_foldToObject, {})
       );
 
       return klass;
