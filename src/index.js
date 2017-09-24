@@ -25,6 +25,7 @@ export syntax protocol = ctx => {
   let staticSymbols = allSymbols.filter(i => i.isStatic);
 
   let allProperties = items.filter(i => i.type === 'property');
+  allProperties.forEach((p, idx) => { p.index = idx; });
   let protoProperties = allProperties.filter(i => !i.isStatic);
   let staticProperties = allProperties.filter(i => i.isStatic);
 
@@ -48,35 +49,60 @@ export syntax protocol = ctx => {
     throw new Error('illegal prototype property named "constructor"');
   }
 
+  let cachedPropertyNames = allProperties
+    .filter(i => isBrackets(i.name))
+    .map(i => {
+      let identifier = fromIdentifier(here, '_propertyName' + i.index);
+      // HACK (TODO: tim, take this out of brackets)
+      return { identifier, value: #`${i.name}[0]` };
+    });
+
+  function usingCache(propertyName, index) {
+    if (isBrackets(propertyName)) {
+      return #`[${fromIdentifier(here, '_propertyName' + index)}]`.first();
+    }
+    return propertyName;
+  }
+
   return #`
-  const ${interfaceName} = new Protocol({
-    name: ${fromStringLiteral(here, unwrap(interfaceName).value)},
-    extends: [${join(extendsClause.map(e => #`${e},`))}],
-    symbols: {
-      ${join(symbols.map(sym => {
-        let description = fromStringLiteral(here, unwrap(interfaceName).value + '.' + unwrap(sym.name).value);
-        return #`${sym.name}: Symbol(${description}),`;
-      }))}
-    },
-    staticSymbols: {
-      ${join(staticSymbols.map(sym => {
-        let description = fromStringLiteral(here, 'static ' + unwrap(interfaceName).value + '.' + unwrap(sym.name).value);
-        return #`${sym.name}: Symbol(${description}),`;
-      }))}
-    },
-    protoProperties: Object.getOwnPropertyDescriptors({
-      ${join(protoProperties.map(p => {
-        let getSetPrefix = p.descType === 'get' ? #`get` : p.descType === 'set' ? #`set` : #``;
-        return #`${getSetPrefix} ${p.name} ${p.parens} ${p.body},`;
-      }))}
-    }),
-    staticProperties: Object.getOwnPropertyDescriptors({
-      ${join(staticProperties.map(p => {
-        let getSetPrefix = p.descType === 'get' ? #`get` : p.descType === 'set' ? #`set` : #``;
-        return #`${getSetPrefix} ${p.name} ${p.parens} ${p.body},`;
-      }))}
-    }),
-  });
+  const ${interfaceName} = (function(
+    _extends,
+    ${join(cachedPropertyNames.map(a => #`${a.identifier},`))}
+    _unused
+  ) {
+    return new Protocol({
+      name: ${fromStringLiteral(here, unwrap(interfaceName).value)},
+      extends: _extends,
+      symbols: {
+        ${join(symbols.map(sym => {
+          let description = fromStringLiteral(here, unwrap(interfaceName).value + '.' + unwrap(sym.name).value);
+          return #`${sym.name}: Symbol(${description}),`;
+        }))}
+      },
+      staticSymbols: {
+        ${join(staticSymbols.map(sym => {
+          let description = fromStringLiteral(here, 'static ' + unwrap(interfaceName).value + '.' + unwrap(sym.name).value);
+          return #`${sym.name}: Symbol(${description}),`;
+        }))}
+      },
+      protoProperties: Object.getOwnPropertyDescriptors({
+        ${join(protoProperties.map(p => {
+          let getSetPrefix = p.descType === 'get' ? #`get` : p.descType === 'set' ? #`set` : #``;
+          return #`${getSetPrefix} ${usingCache(p.name, p.index)} ${p.parens} ${p.body},`;
+        }))}
+      }),
+      staticProperties: Object.getOwnPropertyDescriptors({
+        ${join(staticProperties.map(p => {
+          let getSetPrefix = p.descType === 'get' ? #`get` : p.descType === 'set' ? #`set` : #``;
+          return #`${getSetPrefix} ${usingCache(p.name, p.index)} ${p.parens} ${p.body},`;
+        }))}
+      }),
+    })
+  }(
+    [${join(extendsClause.map(e => #`${e},`))}],
+    ${join(cachedPropertyNames.map(a => #`${a.value},`))}
+    0
+  ));
   `;
 }
 
