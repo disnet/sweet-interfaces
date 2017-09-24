@@ -116,7 +116,7 @@ if (typeof Protocol === 'undefined') {
         klass.prototype,
         this._collect(i => {
           return _entries(i._protoProperties)
-            .filter(function ([name]) { console.log(name); return !(name in klass.prototype); })
+            .filter(function ([name]) { return !(name in klass.prototype); })
             .map(([name, desc]) => [i[name], desc]);
         }).reduceRight(_foldToObject, {})
       );
@@ -125,7 +125,7 @@ if (typeof Protocol === 'undefined') {
         klass,
         this._collect(i =>
           _entries(i._staticProperties)
-            .filter(function ([name]) { console.log(name); return !(name in klass); })
+            .filter(function ([name]) { return !(name in klass); })
             .map(([name, desc]) => [i[name], desc]))
         .reduceRight(_foldToObject, {})
       );
