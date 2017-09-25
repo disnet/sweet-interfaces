@@ -101,17 +101,27 @@ test('a class can implement an interface with a getter/setter', t => {
       a;
       get b() {}
       set c(d) {}
+      get d() {}
+      set d(e) {}
     }
     class C implements I {
       [I.a](){}
     }
     return {
-      b: typeof Object.getOwnPropertyDescriptor(C.prototype, I.b).get,
-      c: typeof Object.getOwnPropertyDescriptor(C.prototype, I.c).set,
+      getb: typeof Object.getOwnPropertyDescriptor(C.prototype, I.b).get,
+      setb: typeof Object.getOwnPropertyDescriptor(C.prototype, I.b).set,
+      getc: typeof Object.getOwnPropertyDescriptor(C.prototype, I.c).get,
+      setc: typeof Object.getOwnPropertyDescriptor(C.prototype, I.c).set,
+      getd: typeof Object.getOwnPropertyDescriptor(C.prototype, I.d).get,
+      setd: typeof Object.getOwnPropertyDescriptor(C.prototype, I.d).set,
     };
   `), {
-    b: 'function',
-    c: 'function',
+    getb: 'function',
+    setb: 'undefined',
+    getc: 'undefined',
+    setc: 'function',
+    getd: 'function',
+    setd: 'function',
   });
 });
 
