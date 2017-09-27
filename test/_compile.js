@@ -4,7 +4,7 @@ import { transform } from 'babel-core';
 import { writeFileSync, readFileSync } from 'fs';
 import { fileSync } from 'tmp';
 
-const POLYFILL = readFileSync(__dirname + '/../polyfill.js');
+const POLYFILL = readFileSync(require.resolve('proposal-first-class-protocols'));
 
 export function compileAndEval(code) {
   return eval(compile(code));
