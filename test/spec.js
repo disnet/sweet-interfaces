@@ -166,6 +166,30 @@ test('a class can implement multiple interfaces', t => {
   `), { b: 'function', c: 'function' });
 });
 
+test('a class can implement multiple interfaces that provide conflicting methods', t => {
+  t.deepEqual(compileAndEval(`
+    protocol I {
+      a;
+    }
+
+    protocol A {
+      [I.a]() { return 0; }
+    }
+
+    protocol B {
+      [I.a]() { return 1; }
+    }
+
+    class C implements A, B {}
+    class D implements B, A {}
+
+    return {
+      c: (new C)[I.a](),
+      d: (new D)[I.a](),
+    };
+  `), { c: 0, d: 1 });
+});
+
 test('a class can extend another and implement an interface', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
