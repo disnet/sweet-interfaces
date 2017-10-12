@@ -1,21 +1,21 @@
 import test from 'ava';
 import { compileAndEval, compileTopLevel, compile } from './_compile';
 
-test('an interface is an object', t => {
+test('a protocol is an object', t => {
   t.is(compileAndEval(`
     protocol I {}
     return typeof I;
   `), 'object');
 });
 
-test('an interface has no prototype', t => {
+test('a protocol has no prototype', t => {
   t.is(compileAndEval(`
     protocol I {}
     return Object.getPrototypeOf(Object.getPrototypeOf(I));
   `), null);
 });
 
-test('an interface can declare a symbol', t => {
+test('a protocol can declare a symbol', t => {
   t.is(compileAndEval(`
     protocol I {
       a;
@@ -24,7 +24,7 @@ test('an interface can declare a symbol', t => {
   `), 'symbol');
 });
 
-test('an interface can declare a static symbol', t => {
+test('a protocol can declare a static symbol', t => {
   t.is(compileAndEval(`
     protocol I {
       static a;
@@ -33,7 +33,7 @@ test('an interface can declare a static symbol', t => {
   `), 'symbol');
 });
 
-test('an interface can declare multiple symbols', t => {
+test('a protocol can declare multiple symbols', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
       a; b;
@@ -47,14 +47,14 @@ test('an interface can declare multiple symbols', t => {
   `), { a: 'symbol', b: 'symbol', c: 'symbol' });
 });
 
-test('an interface can be exported', t => {
+test('a protocol can be exported', t => {
   t.regex(compileTopLevel(`
-    export protocol INTERFACENAME { a; }
-  `), /\bINTERFACENAME\b/);
+    export protocol PROTOCOLNAME { a; }
+  `), /\bPROTOCOLNAME\b/);
 });
 
 
-test('a class can implement an interface', t => {
+test('a class can implement a protocol', t => {
   t.is(compileAndEval(`
     protocol I {
       a;
@@ -67,7 +67,7 @@ test('a class can implement an interface', t => {
   `), 'function');
 });
 
-test('a class can implement an interface with a static member', t => {
+test('a class can implement a protocol with a static member', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
       a;
@@ -82,7 +82,7 @@ test('a class can implement an interface with a static member', t => {
   `), 'function');
 });
 
-test('a class can get a static member from an interface', t => {
+test('a class can get a static member from a protocol', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
       a;
@@ -95,7 +95,7 @@ test('a class can get a static member from an interface', t => {
   `), 'function');
 });
 
-test('a class can implement an interface with a getter/setter', t => {
+test('a class can implement a protocol with a getter/setter', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
       a;
@@ -125,7 +125,7 @@ test('a class can implement an interface with a getter/setter', t => {
   });
 });
 
-test('a class can implement an interface with a static getter/setter', t => {
+test('a class can implement a protocol with a static getter/setter', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
       a;
@@ -145,7 +145,7 @@ test('a class can implement an interface with a static getter/setter', t => {
   });
 });
 
-test('properties provided by an interface are non-enumerable', t => {
+test('properties provided by a protocol are non-enumerable', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
       a (){}
@@ -223,7 +223,7 @@ test('a class can implement multiple interfaces that provide conflicting methods
   `), { c: 0, d: 1 });
 });
 
-test('a class can extend another and implement an interface', t => {
+test('a class can extend another and implement a protocol', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
       a;
@@ -247,7 +247,7 @@ test('a class can extend another and implement an interface', t => {
   `), { b: 'function', c: 'function', d: 'function', bA: true, bB: true });
 });
 
-test('an unimplemented interface throws', t => {
+test('an unimplemented protocol throws', t => {
   let code = compile(`
     protocol I { a; }
     class C implements I {}
@@ -255,7 +255,7 @@ test('an unimplemented interface throws', t => {
   t.throws(() => { eval(code); });
 });
 
-test('an unimplemented static interface throws', t => {
+test('an unimplemented static protocol throws', t => {
   let code = compile(`
     protocol I { static a; }
     class C implements I {}
@@ -263,13 +263,13 @@ test('an unimplemented static interface throws', t => {
   t.throws(() => { eval(code); });
 });
 
-test('duplicate interface fields is early error', t => {
+test('duplicate protocol fields is early error', t => {
   t.throws(() => {
     compile(`protocol I { a; b; a; }`);
   });
 });
 
-test('duplicate static interface fields is early error', t => {
+test('duplicate static protocol fields is early error', t => {
   t.throws(() => {
     compile(`protocol I { static a; static b; static a; }`);
   });
