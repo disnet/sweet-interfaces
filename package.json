@@ -1,6 +1,6 @@
 {
   "name": "sweet-interfaces",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "an implementation of the ECMAScript first-class protocols proposal with macros",
   "main": "src/index.js",
   "files": [
