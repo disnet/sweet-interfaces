@@ -145,6 +145,39 @@ test('a class can implement an interface with a static getter/setter', t => {
   });
 });
 
+test('properties provided by an interface are non-enumerable', t => {
+  t.deepEqual(compileAndEval(`
+    protocol I {
+      a (){}
+      static b(){}
+      get c(){}
+      set d(x){}
+      get e(){}
+      set e(x){}
+    }
+
+    class C implements I {}
+
+    function desc(o, p) {
+      let { writable, enumerable, configurable } = Object.getOwnPropertyDescriptor(o, p);
+      return { writable, enumerable, configurable };
+    }
+    return {
+      a: desc(C.prototype, I.a),
+      b: desc(C, I.b),
+      c: desc(C.prototype, I.c),
+      d: desc(C.prototype, I.d),
+      e: desc(C.prototype, I.e),
+    };
+  `), {
+    a: { writable: true, enumerable: false, configurable: true },
+    b: { writable: true, enumerable: false, configurable: true },
+    c: { writable: void 0, enumerable: false, configurable: true },
+    d: { writable: void 0, enumerable: false, configurable: true },
+    e: { writable: void 0, enumerable: false, configurable: true },
+  });
+});
+
 test('a class can implement multiple interfaces', t => {
   t.deepEqual(compileAndEval(`
     protocol I {
@@ -213,7 +246,6 @@ test('a class can extend another and implement an interface', t => {
     };
   `), { b: 'function', c: 'function', d: 'function', bA: true, bB: true });
 });
-
 
 test('an unimplemented interface throws', t => {
   let code = compile(`

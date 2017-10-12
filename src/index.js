@@ -70,6 +70,13 @@ export syntax protocol = ctx => {
     ${join(cachedPropertyNames.map(a => #`${a.identifier},`))}
     _unused
   ) {
+    function nonEnumDescriptors(o) {
+      let descs = Object.getOwnPropertyDescriptors(o);
+      for (let p of Object.keys(descs)) {
+        descs[p].enumerable = false;
+      }
+      return descs;
+    }
     return new Protocol({
       name: ${fromStringLiteral(here, unwrap(interfaceName).value)},
       extends: _extends,
@@ -85,13 +92,13 @@ export syntax protocol = ctx => {
           return #`${sym.name}: Symbol(${description}),`;
         }))}
       },
-      provides: Object.getOwnPropertyDescriptors({
+      provides: nonEnumDescriptors({
         ${join(provides.map(p => {
           let getSetPrefix = p.descType === 'get' ? #`get` : p.descType === 'set' ? #`set` : #``;
           return #`${getSetPrefix} ${usingCache(p.name, p.index)} ${p.parens} ${p.body},`;
         }))}
       }),
-      staticProvides: Object.getOwnPropertyDescriptors({
+      staticProvides: nonEnumDescriptors({
         ${join(staticProvides.map(p => {
           let getSetPrefix = p.descType === 'get' ? #`get` : p.descType === 'set' ? #`set` : #``;
           return #`${getSetPrefix} ${usingCache(p.name, p.index)} ${p.parens} ${p.body},`;
