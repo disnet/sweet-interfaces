@@ -96,14 +96,14 @@ export function matchIdentifierOrKeyword(ctx) {
   return t.value;
 }
 
-function matchInterfaceSymbol(ctx) {
+function matchInterfaceRequires(ctx) {
   let name = matchIdentifierOrKeyword(ctx);
   let _static = isStatic(name);
   if (_static) {
     name = matchIdentifierOrKeyword(ctx);
   }
   matchPunctuator(ctx, ';');
-  return { type: 'symbol', isStatic: _static, name };
+  return { type: 'requires', isStatic: _static, name };
 }
 
 function matchPropertyName(ctx) {
@@ -113,7 +113,7 @@ function matchPropertyName(ctx) {
   return t.value;
 }
 
-function matchInterfaceProperty(ctx) {
+function matchInterfaceProvides(ctx) {
   let name = matchPropertyName(ctx);
   let _static = isStatic(name);
   if (_static) {
@@ -125,7 +125,7 @@ function matchInterfaceProperty(ctx) {
   }
   let parens = matchParens(ctx);
   let body = matchBraces(ctx);
-  return { type: 'property', isStatic: _static, descType, name, parens, body };
+  return { type: 'provides', isStatic: _static, descType, name, parens, body };
 }
 
 function isDone(ctx) {
@@ -199,10 +199,10 @@ export function matchInterfaceItems(ctx) {
   while (!isDone(ctx)) {
     let mark = ctx.mark();
     try {
-      result.push(matchInterfaceSymbol(ctx));
+      result.push(matchInterfaceRequires(ctx));
     } catch (e) {
       ctx.reset(mark);
-      result.push(matchInterfaceProperty(ctx));
+      result.push(matchInterfaceProvides(ctx));
     }
   }
   return result;

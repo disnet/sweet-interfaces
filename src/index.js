@@ -20,16 +20,16 @@ export syntax protocol = ctx => {
   let inner = ctx.contextify(body);
   let items = matchInterfaceItems(inner);
 
-  let allSymbols = items.filter(i => i.type === 'symbol');
-  let symbols = allSymbols.filter(i => !i.isStatic);
-  let staticSymbols = allSymbols.filter(i => i.isStatic);
+  let allRequires = items.filter(i => i.type === 'requires');
+  let requires = allRequires.filter(i => !i.isStatic);
+  let staticRequires = allRequires.filter(i => i.isStatic);
 
-  let allProperties = items.filter(i => i.type === 'property');
-  allProperties.forEach((p, idx) => { p.index = idx; });
-  let protoProperties = allProperties.filter(i => !i.isStatic);
-  let staticProperties = allProperties.filter(i => i.isStatic);
+  let allProvides = items.filter(i => i.type === 'provides');
+  allProvides.forEach((p, idx) => { p.index = idx; });
+  let provides = allProvides.filter(i => !i.isStatic);
+  let staticProvides = allProvides.filter(i => i.isStatic);
 
-  // early error for duplicate symbols
+  // early error for duplicate required symbols
   function firstDuplicate(xs) {
     let s = new Set;
     for (let i = 0; i < xs.length; ++i) {
@@ -38,18 +38,18 @@ export syntax protocol = ctx => {
       s.add(x);
     }
   }
-  let dupSymbol = firstDuplicate(allSymbols.map(i => unwrap(i.name).value));
+  let dupSymbol = firstDuplicate(allRequires.map(i => unwrap(i.name).value));
   if (dupSymbol != null) throw new Error('interface "' + unwrap(interfaceName).value + '" declares symbol named "' + dupSymbol + '" more than once');
 
-  if (staticProperties.some(i => isIdentifier(i.name) && unwrap(i.name).value === 'prototype')) {
+  if (staticProvides.some(i => isIdentifier(i.name) && unwrap(i.name).value === 'prototype')) {
     throw new Error('illegal static property named "prototype"');
   }
 
-  if (protoProperties.some(i => isIdentifier(i.name) && unwrap(i.name).value === 'constructor')) {
+  if (provides.some(i => isIdentifier(i.name) && unwrap(i.name).value === 'constructor')) {
     throw new Error('illegal prototype property named "constructor"');
   }
 
-  let cachedPropertyNames = allProperties
+  let cachedPropertyNames = allProvides
     .filter(i => isBrackets(i.name))
     .map(i => {
       let identifier = fromIdentifier(here, '_propertyName' + i.index);
@@ -73,26 +73,26 @@ export syntax protocol = ctx => {
     return new Protocol({
       name: ${fromStringLiteral(here, unwrap(interfaceName).value)},
       extends: _extends,
-      symbols: {
-        ${join(symbols.map(sym => {
+      requires: {
+        ${join(requires.map(sym => {
           let description = fromStringLiteral(here, unwrap(interfaceName).value + '.' + unwrap(sym.name).value);
           return #`${sym.name}: Symbol(${description}),`;
         }))}
       },
-      staticSymbols: {
-        ${join(staticSymbols.map(sym => {
+      staticRequires: {
+        ${join(staticRequires.map(sym => {
           let description = fromStringLiteral(here, 'static ' + unwrap(interfaceName).value + '.' + unwrap(sym.name).value);
           return #`${sym.name}: Symbol(${description}),`;
         }))}
       },
-      protoProperties: Object.getOwnPropertyDescriptors({
-        ${join(protoProperties.map(p => {
+      provides: Object.getOwnPropertyDescriptors({
+        ${join(provides.map(p => {
           let getSetPrefix = p.descType === 'get' ? #`get` : p.descType === 'set' ? #`set` : #``;
           return #`${getSetPrefix} ${usingCache(p.name, p.index)} ${p.parens} ${p.body},`;
         }))}
       }),
-      staticProperties: Object.getOwnPropertyDescriptors({
-        ${join(staticProperties.map(p => {
+      staticProvides: Object.getOwnPropertyDescriptors({
+        ${join(staticProvides.map(p => {
           let getSetPrefix = p.descType === 'get' ? #`get` : p.descType === 'set' ? #`set` : #``;
           return #`${getSetPrefix} ${usingCache(p.name, p.index)} ${p.parens} ${p.body},`;
         }))}
