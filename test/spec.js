@@ -145,6 +145,60 @@ test('a class can implement a protocol with a static getter/setter', t => {
   });
 });
 
+test('a protocol can require a string-named property', t => {
+  t.deepEqual(compileAndEval(`
+    protocol I {
+      'string-named property';
+      provided() {}
+    }
+    class C implements I {
+      'string-named property'(){}
+    }
+    return {
+      value: I['string-named property'],
+      provided: typeof C.prototype[I.provided],
+    };
+  `), {
+    value: 'string-named property',
+    provided: 'function',
+  });
+
+  let code = compile(`
+    protocol I {
+      'string-named property';
+    }
+    class C implements I {}
+  `);
+  t.throws(() => { eval(code); });
+});
+
+test('a protocol can require a static string-named property', t => {
+  t.deepEqual(compileAndEval(`
+    protocol I {
+      static 'string-named property';
+      provided() {}
+    }
+    class C implements I {
+      static 'string-named property'(){}
+    }
+    return {
+      value: I['string-named property'],
+      provided: typeof C.prototype[I.provided],
+    };
+  `), {
+    value: 'string-named property',
+    provided: 'function',
+  });
+
+  let code = compile(`
+    protocol I {
+      static 'string-named property';
+    }
+    class C implements I {}
+  `);
+  t.throws(() => { eval(code); });
+});
+
 test('properties provided by a protocol are non-enumerable', t => {
   t.deepEqual(compileAndEval(`
     protocol I {

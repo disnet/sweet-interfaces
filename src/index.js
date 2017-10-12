@@ -82,12 +82,18 @@ export syntax protocol = ctx => {
       extends: _extends,
       requires: {
         ${join(requires.map(sym => {
+          if (isStringLiteral(sym.name)) {
+            return #`${sym.name}: ${sym.name},`;
+          }
           let description = fromStringLiteral(here, unwrap(interfaceName).value + '.' + unwrap(sym.name).value);
           return #`${sym.name}: Symbol(${description}),`;
         }))}
       },
       staticRequires: {
         ${join(staticRequires.map(sym => {
+          if (isStringLiteral(sym.name)) {
+            return #`${sym.name}: ${sym.name},`;
+          }
           let description = fromStringLiteral(here, 'static ' + unwrap(interfaceName).value + '.' + unwrap(sym.name).value);
           return #`${sym.name}: Symbol(${description}),`;
         }))}

@@ -89,18 +89,20 @@ export function matchPattern(patterns, ctx) {
   return results;
 }
 
-export function matchIdentifierOrKeyword(ctx) {
+export function matchIdentifierOrKeywordOrString(ctx) {
   let t = ctx.next();
   if (t.done) throw new Error(`No syntax to match`);
-  if (!(isIdentifier(t.value) || isKeyword(t.value))) throw new Error(`Not an identifier or a keyword: ${t.value}`);
+  if (!(isIdentifier(t.value) || isKeyword(t.value) || isStringLiteral(t.value))) {
+    throw new Error(`Not an identifier or a keyword: ${t.value}`);
+  }
   return t.value;
 }
 
 function matchInterfaceRequires(ctx) {
-  let name = matchIdentifierOrKeyword(ctx);
+  let name = matchIdentifierOrKeywordOrString(ctx);
   let _static = isStatic(name);
   if (_static) {
-    name = matchIdentifierOrKeyword(ctx);
+    name = matchIdentifierOrKeywordOrString(ctx);
   }
   matchPunctuator(ctx, ';');
   return { type: 'requires', isStatic: _static, name };
