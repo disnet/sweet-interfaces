@@ -19,7 +19,7 @@
     "@sweet-js/core": "^3.0.13",
     "ava": "^0.22.0",
     "babel-core": "6.26.0",
-    "proposal-first-class-protocols": "2.0.0",
+    "proposal-first-class-protocols": "3.0.1",
     "tmp": "^0.0.33"
   },
   "dependencies": {
