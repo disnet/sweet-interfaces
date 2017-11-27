@@ -338,6 +338,21 @@ test('same name static and prototype fields is early error', t => {
   });
 });
 
+test('conflicting required/provided entries is early error', t => {
+  t.throws(() => {
+    compile(`protocol I { a; a(){} }`);
+  });
+  t.throws(() => {
+    compile(`protocol I { static a; a(){} }`);
+  });
+  t.throws(() => {
+    compile(`protocol I { a; stratic a(){} }`);
+  });
+  t.throws(() => {
+    compile(`protocol I { static a; static a(){} }`);
+  });
+});
+
 test('static method named prototype is early error', t => {
   t.notThrows(() => {
     compile(`protocol I { prototype; }`);

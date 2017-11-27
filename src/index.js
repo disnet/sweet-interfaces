@@ -31,14 +31,26 @@ export syntax protocol = ctx => {
 
   // early error for duplicate required symbols
   function firstDuplicate(xs) {
-    let s = new Set;
+    let s = new Map;
     for (let i = 0; i < xs.length; ++i) {
-      let x = xs[i];
-      if (s.has(x)) return x;
-      s.add(x);
+      let { descType, name } = xs[i];
+      let val = [];
+      if (s.has(name)) {
+        val = s.get(name);
+        switch (descType) {
+          case 'get':
+          case 'set':
+            if (val.includes(descType)) return name;
+            break;
+          default:
+            return name;
+        }
+      }
+      val.push(descType);
+      s.set(name, val);
     }
   }
-  let dupSymbol = firstDuplicate(allRequires.map(i => unwrap(i.name).value));
+  let dupSymbol = firstDuplicate(items.map(i => { return { descType: i.descType, name: unwrap(i.name).value }; }));
   if (dupSymbol != null) throw new Error('interface "' + unwrap(interfaceName).value + '" declares symbol named "' + dupSymbol + '" more than once');
 
   if (staticProvides.some(i => isIdentifier(i.name) && unwrap(i.name).value === 'prototype')) {
